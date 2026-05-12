@@ -4,7 +4,7 @@ name: TDD Red step
 description: This prompt is used to implement one test scenario that fails in a TDD workflow for an AI agent
 argument-hint: Implement the following test scenario in a TDD workflow for an AI agent: {scenario_description}
 tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'upstash/context7/*', 'todo']
-model: GPT-5 mini (copilot)
+model: GPT-5.4 (copilot)
 ---
 
 # Red TDD step prompt
@@ -13,6 +13,8 @@ model: GPT-5 mini (copilot)
 1. Analyze the provided scenario description carefully.
     - If the scenario description is provided as an issue reference, retrieve the issue content and extract the specified scenario.
     - If the scenario description is provided directly, use it as is.
+    - If the scenario already exists, create and maintain the corresponding test suite for each architecture layer (application, domain, and infrastructure) by using the existing files following the naming convention: application_{feature_name}.md, domain_{feature_name}.md, and infrastructure_{feature_name}.md.
+    - If the scenario does not already exist, first analyze the missing behavior and complete the related issues for each architecture layer (application, domain, and infrastructure) in a new scenario. Once the implementation details and issues are fully defined, create the corresponding tests for each layer to ensure the new scenario is properly covered.
 2. Check if a test file already exists for the scope of this test scenario.
    - If it exists, append the new test case to the existing file.
    - If it does not exist, create a new test file in the appropriate directory structure based on the module (domain, application, infrastructure).
@@ -35,7 +37,8 @@ model: GPT-5 mini (copilot)
 
 ## Naming conventions and examples
 - Test file naming: for domain tests use `domain/src/test/.../XxxTest.java` or for lightweight Python tests use `tests/tdd/test_<feature>_<case>.py`.
-- Test method naming: `should<ExpectedBehavior>When<Condition>` (e.g., `shouldCreateOrderWhenItemAvailable`).
+- Test method naming: `should<ExpectedBehavior>When<Condition><ScenarioNumberX>` (e.g., `shouldCreateOrderWhenItemAvailable`).
+- If the test already exists, rename him with the same convention and add a scenario number at the end if needed (e.g., `shouldCreateOrderWhenItemAvailableScenario2`).
 
 ## Additional negative examples
 - Do NOT merge multiple modules in a single test file when the issue was split per module. Generate one test per module scope.
@@ -84,7 +87,7 @@ class ContactExportUseCaseTest {
         TestState<User> userTestState = fixture.getUserTestState();
         TestState<Contact> contactTestState = fixture.getContactTestState();
         UseCaseHandler<ExportContactQuery, ContactExportDto> handler = fixture.getUseCaseHandler();
-        
+
         User user = new User("user1");
         userTestState.add(user);
         List<Contact> contacts = IntStream.range(0, 20)
@@ -112,3 +115,13 @@ class ContactExportUseCaseTest {
 - `templates/issue.md`
 - `scripts/validate_issue_format.py`
 - `docs/features/` (generated issues with Gherkin scenarios)
+
+<!-- Notes personnelles :
+
+J'ai ajouté : - If the scenario already exists, create and maintain the corresponding test suite for each architecture layer (application, domain, and infrastructure) by using the existing files following the naming convention: application_{feature_name}.md, domain_{feature_name}.md, and infrastructure_{feature_name}.md.
+
+Pour pouvoir completer les issues et ajouter des scenario de tests, ce qui peux être très utile pour faire évoluer les features et les tests au fur et à mesure de l'avancement du projet.
+
+- If the scenario does not already exist, first analyze the missing behavior and complete the related issues for each architecture layer (application, domain, and infrastructure) in a new scenario. Once the implementation details and issues are fully defined, create the corresponding tests for each layer to ensure the new scenario is properly covered.
+
+Pour créer des tests dans chaque couche même si le scénario n'existe, c'est peut être un peu trop. J'ai tendance à mettre des tests uniquement dans la couche ou le comportement est implémenté, mais ça peux être intéressant de créer les tests dans les autres couches pour forcer l'implémentation à être plus complète et éviter d'oublier des cas de tests et vu que cela ne prend pas plus de temps. A voir à l'usage si c'est pertinent ou pas.-->

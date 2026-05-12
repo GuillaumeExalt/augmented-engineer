@@ -18,6 +18,7 @@ description: Generate structured development issues in markdown files with title
     6. Each features/{feature_name} directory should contain a domain_{feature_name}.md file that models the domain concepts and rules related to the feature.
     7. Each features/{feature_name} directory should contain a application_{feature_name}.md file that models the domain concepts and rules related to the feature.
     8. Each features/{feature_name} directory should contain a infrastructure_{feature_name}.md file that models the domain concepts and rules related to the feature.
+    9. The Text should be only in french
     9. Use the `templates/issue.md` template format for the file.
     10. Validate the created issue using `python scripts/validate_issue_format.py <issue_file>`.
 

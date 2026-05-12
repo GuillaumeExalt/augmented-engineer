@@ -25,6 +25,13 @@ When il commande une boisson alcool premium
 Then la commande est rejetee
 And le solde de jetons boisson reste a 1
 
+Scenario: 4 - Creer une commande en attente pour un article disponible
+Given un festivalier identifie
+And un article "Mojito" disponible en stock
+When il commande 1 "Mojito"
+Then la commande est creee avec le statut "EN_ATTENTE"
+And un identifiant de commande non vide est attribue
+
 **Notes**
 - Une boisson non alcoolisee coute 0 jeton boisson.
 - Une boisson alcool normale coute 1 jeton boisson.

@@ -25,6 +25,13 @@ When l'infrastructure termine le traitement
 Then aucun debit de jetons partiel n'est conserve
 And l'application recoit une erreur technique exploitable
 
+Scenario: 4 - Creer une commande en attente pour un article disponible
+Given un article "Mojito" disponible en stock dans le catalogue
+And une demande de commande pour 1 "Mojito"
+When l'infrastructure cree la commande initiale
+Then la commande stockee porte le statut "EN_ATTENTE"
+And un identifiant de commande non vide est genere
+
 **Notes**
 - Les ecritures commande et jetons doivent rester coherentes.
 - Les erreurs techniques doivent etre remontees sans masquer la cause fonctionnelle.
