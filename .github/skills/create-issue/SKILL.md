@@ -15,8 +15,11 @@ description: Generate structured development issues in markdown files with title
     3. Generate a concise, explicit title.
     4. Produce 1..N Gherkin scenarios covering the happy path and relevant edge cases.
     5. Create the issue file under `docs/features/{feature_name}/{module_name}_{issue_title}.md`.
-    6. Use the `templates/issue.md` template format for the file.
-    7. Validate the created issue using `python scripts/validate_issue_format.py <issue_file>`.
+    6. Each features/{feature_name} directory should contain a domain_{feature_name}.md file that models the domain concepts and rules related to the feature.
+    7. Each features/{feature_name} directory should contain a application_{feature_name}.md file that models the domain concepts and rules related to the feature.
+    8. Each features/{feature_name} directory should contain a infrastructure_{feature_name}.md file that models the domain concepts and rules related to the feature.
+    9. Use the `templates/issue.md` template format for the file.
+    10. Validate the created issue using `python scripts/validate_issue_format.py <issue_file>`.
 
 # Note
 
