@@ -1,7 +1,7 @@
 ---
 agent: agent
 name: TDD Red step
-description: "Use when you want to work one layer at a time in Red TDD: parse a couche plus Feature/Scenario block, mutualize scenario numbering in docs/features split issues, create behavior-shaped failing tests for that layer, and return the scenario numbers that were added or reused."
+description: "Use when you want to work one layer at a time in Red TDD: parse a couche plus Feature/Scenario block, mutualize scenario numbering in docs/features split issues, create behavior-shaped failing tests for that layer, and return the scenario numbers that were added or reused. For application API slices, create failing tests through a real HTTP-facing entrypoint or web test harness rather than direct method calls on a plain Java object."
 argument-hint: "Create Red tests for one layer and mutualize the scenarios in issues: couche={application|domain|infrastructure}\nFeature: ..."
 tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'todo']
 model: GPT-5.4 (copilot)
@@ -62,7 +62,7 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 
 ### Layer rule
 - Only the requested `couche` may receive new or updated tests during this prompt.
-- `application` should prefer controller-entrypoint tests and transport DTO vocabulary.
+- `application` should prefer controller-entrypoint tests, transport DTO vocabulary, and real HTTP-facing test harnesses when scenarios mention requests, routes, status codes, or response bodies.
 - `domain` should prefer use-case tests, domain models, ports, and typed business errors.
 - `infrastructure` should prefer adapter, repository, mapping, or technical integration tests.
 
@@ -97,6 +97,7 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 ### Red test design rule
 - Translate each selected `Scenario:` into executable Arrange/Act/Assert code that reflects its `Given/When/Then` steps.
 - Build the business inputs named by the scenario, execute one concrete action, and assert the observable outcome expected by the issue.
+- For application scenarios expressed in HTTP terms, execute the action through a real web-facing entrypoint, route mapping, or web test client and assert the HTTP-visible outcome; direct invocation of an unannotated plain method is not sufficient evidence of endpoint behavior.
 - Prefer failure through unmet assertions, wrong exception type/message, or wrong observable state/output over an unconditional placeholder failure.
 - If the owning production abstraction does not exist yet, add only the minimum requested-layer test-local seam needed to express the scenario while keeping the test behavior-focused.
 - A Red test is invalid if its only failure mechanism is `fail(...)`, `Assertions.fail(...)`, `throw new UnsupportedOperationException(...)`, an empty body, or a TODO comment.
@@ -143,6 +144,7 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 - You **MUST NOT** treat a bare `BUILD SUCCESSFUL` result from a `--tests` selector as proof that the targeted test ran.
 - You **MUST** confirm that at least one targeted test method actually executed before concluding `RED`.
 - You **MUST** return `BLOCKED` when the targeted selector matched no real tests or when the requested scenario is already covered by a passing real workspace test.
+- For application scenarios that mention HTTP requests, paths, methods, or status codes, you **MUST** create the failing test through a real HTTP-facing test surface rather than by calling a plain Java method directly.
 - You **MUST** follow the testing instructions for the requested layer:
   - `docs/agents/instructions/application-testing.instructions.md`
   - `docs/agents/instructions/domain-testing.instructions.md`
@@ -158,6 +160,7 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 - Do not create a placeholder test whose only red signal is `fail(...)`, `Assertions.fail(...)`, `throw new UnsupportedOperationException(...)`, or a TODO marker.
 - Do not use build outputs, attachments, or editor-only context as substitutes for checking the actual workspace files.
 - Do not report `RED` if no targeted test method was proven to execute.
+- Do not treat a direct call to a plain Java controller method as sufficient for an application scenario that explicitly asserts HTTP route, method, or status behavior.
 
 ## JSON output contract
 

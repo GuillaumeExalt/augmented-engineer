@@ -11,6 +11,11 @@ plugins {
 dependencies {
     implementation(project(":domain"))
     implementation(project(":infrastructure"))
+    implementation("org.springframework:spring-webmvc:6.1.8")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.1")
+
+    testImplementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
+    testImplementation("org.springframework:spring-test:6.1.8")
 }
 
 application {

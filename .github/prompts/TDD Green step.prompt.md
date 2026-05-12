@@ -1,7 +1,7 @@
 ---
 agent: agent
 name: TDD Green step
-description: "Use when you want to make one layer green from a Red-step JSON result: consume one Red output object, target only the resolved layer and scenario numbers, implement only that slice in test code, and return JSON for a layer-scoped Refactor step."
+description: "Use when you want to make one layer green from a Red-step JSON result: consume one Red output object, target only the resolved layer and scenario numbers, implement only that slice in test code, and return JSON for a layer-scoped Refactor step. For application API slices, keep the temporary seam shaped like a future framework-backed HTTP controller instead of a plain Java object. For infrastructure persistence slices, keep the temporary seam shaped like a future JPA-backed adapter that will implement an existing or to-be-extracted pure-domain port, use separate persistence types when needed, and leave clear notes for Refactor about the required JPA entities, mapper, and wiring."
 argument-hint: 'Make the Red result green for one layer: { "status": "RED", ... }'
 tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'todo']
 model: GPT-5.4 (copilot)
@@ -19,6 +19,8 @@ For the requested layer only, the prompt must:
 - start from the exact `targetTestClass` selected by the Red step
 - make only the selected scenarios green
 - keep the implementation inside test code
+- for application API slices, keep the temporary seam aligned with a future framework-backed HTTP controller rather than a plain Java object invoked directly
+- for infrastructure persistence slices, keep the temporary seam aligned with a future JPA promotion instead of a technology-agnostic or JDBC-oriented design
 - return JSON that is already scoped to one layer and one set of scenario numbers
 
 ## Expected input
@@ -101,11 +103,18 @@ Examples:
 - You **MUST** use `targetTestClass` from the Red result as the ownership anchor for the Green step.
 - You **MUST** prefer the existing business concept and existing test class when present.
 - You **MUST** follow the testing instructions for the requested layer.
+- For application API slices, you **MUST** note whether Refactor will need route declarations, controller annotations or handler metadata, and minimum web framework wiring for the selected scenarios.
+- For infrastructure repository slices, you **MUST** note whether the required domain port or interface already exists or must be extracted as a pure-domain contract during Refactor.
+- For infrastructure persistence slices, you **MUST** note whether Refactor will need separate JPA persistence entities, a dedicated mapper, and JPA wiring for the selected scenarios.
 
 ## Layer guard rails
-- `application`: keep a controller-to-domain seam inside the test code. Do not embed domain business rules in the temporary controller.
+- `application`: keep an HTTP-controller-to-domain seam inside test code. For API or endpoint scenarios, exercise a real route or web test surface and preserve HTTP method, path, status, and body behavior. Do not embed domain business rules in the temporary controller.
 - `domain`: keep a use-case-to-port seam inside the test code. Do not create concrete infrastructure implementations.
 - `infrastructure`: keep the implementation aligned with the existing domain port contract. Do not move business validation rules into the repository.
+  - Shape the temporary seam like a future concrete JPA repository or adapter when the selected scenarios are about persistence, retrieval, update, or query behavior.
+  - Keep domain and persistence concerns separate in the temporary test code when distinct JPA persistence entities or technical models will be needed later.
+  - If no matching domain port or interface exists yet for the targeted repository behavior, record that dependency explicitly in the Green notes so Refactor can extract the minimum pure-domain port before promoting the adapter.
+  - Record explicitly in the Green notes when Refactor must create separate JPA entities, a domain-to-persistence mapper, and the minimum JPA wiring.
 
 ## Hard stops
 - Do not refactor during Green.
@@ -115,6 +124,9 @@ Examples:
 - Do not widen the implementation to all scenarios in the class if only a subset was requested.
 - Do not create production classes under `src/main`.
 - Do not create a parallel top-level concept when an equivalent one already exists.
+- Do not make an application API or endpoint scenario green by directly invoking a plain Java method that has no real route or handler semantics.
+- Do not hide a missing domain repository contract behind a temporary infrastructure seam without reporting whether Refactor must extract a minimal pure-domain port.
+- Do not let the temporary infrastructure seam imply JDBC or another persistence technology when the slice will be promoted as a real persistence implementation during Refactor; the target technology is JPA.
 
 ## JSON output contract
 

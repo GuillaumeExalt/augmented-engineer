@@ -10,4 +10,7 @@ plugins {
 
 dependencies {
     implementation(project(":domain"))
+    implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
+    implementation("org.hibernate.orm:hibernate-core:6.5.2.Final")
+    runtimeOnly("com.h2database:h2:2.2.224")
 }
