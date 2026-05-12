@@ -1,127 +1,292 @@
 ---
 agent: agent
 name: TDD Red step
-description: This prompt is used to implement one test scenario that fails in a TDD workflow for an AI agent
-argument-hint: Implement the following test scenario in a TDD workflow for an AI agent: {scenario_description}
-tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'upstash/context7/*', 'todo']
+description: "Use when you want to work one layer at a time in Red TDD: parse a couche plus Feature/Scenario block, mutualize scenario numbering in docs/features split issues, create behavior-shaped failing tests for that layer, and return the scenario numbers that were added or reused."
+argument-hint: "Create Red tests for one layer and mutualize the scenarios in issues: couche={application|domain|infrastructure}\nFeature: ..."
+tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'todo']
 model: GPT-5.4 (copilot)
 ---
 
 # Red TDD step prompt
 
+## Goal
+Handle exactly one layer at a time in Red step.
+
+For the requested layer only, the prompt must:
+- parse the input `couche` and the provided Gherkin `Feature:` block
+- find the nearest existing feature family under `docs/features/...`
+- mutualize the scenarios into the split issue files
+- reuse existing scenario numbers when the scenario already exists semantically
+- add new scenario numbers only when the behavior is truly missing
+- create or extend only the behavior-shaped failing tests for the requested layer
+- translate each selected scenario into executable Arrange/Act/Assert code instead of a placeholder failure
+- return the scenario numbers that were added, reused, and selected
+
+## Expected input
+
+Input:
+- `couche`: `application`, `domain`, or `infrastructure`
+- one Gherkin block that always starts with `Feature:` and contains one or more `Scenario:` entries
+
+Accepted input prefixes:
+- `couche=application`
+- `couche=domain`
+- `couche=infrastructure`
+- `layer=application|domain|infrastructure`
+
+Example:
+```text
+couche=application
+Feature: Creer une commande via l'API
+
+Scenario: Commande creee avec succes
+  Given un festivalier identifie avec l'id "festivalier-42"
+  And les articles suivants sont disponibles :
+    | article   | quantite |
+    | Mojito    | 10       |
+    | Eau plate | 50       |
+  When le festivalier envoie une requete POST /commandes avec :
+    | festivalierId | festivalier-42                  |
+    | articles      | [{id: "mojito", quantite: 2}] |
+  Then la reponse a le statut HTTP 201
+  And la reponse contient un champ "commandeId" non vide
+  And la commande est creee avec le statut "EN_ATTENTE"
+
+Scenario: Requete refusee si le festivalier n'est pas authentifie
+  Given aucun festivalier authentifie
+  When une requete POST /commandes est envoyee
+  Then la reponse a le statut HTTP 401
+```
+
+## Scope rules
+
+### Layer rule
+- Only the requested `couche` may receive new or updated tests during this prompt.
+- `application` should prefer controller-entrypoint tests and transport DTO vocabulary.
+- `domain` should prefer use-case tests, domain models, ports, and typed business errors.
+- `infrastructure` should prefer adapter, repository, mapping, or technical integration tests.
+
+### Issue mutualization rule
+- Search existing feature folders before creating a new one.
+- Compare scenarios by business intent, preconditions, user action, and expected outcome, not by exact wording.
+- If an equivalent scenario already exists in the requested issue or in a sibling split issue, reuse that exact scenario number.
+- If the scenario is new, assign the next available scenario number for that feature family.
+- When a new scenario number is added, update all existing sibling split issue files for the same feature so numbering stays aligned across layers.
+- Use the requested layer scenario wording as the source of truth for the requested issue file.
+- Adapt the sibling issue wording with the closest existing ubiquitous language already present in the repository.
+- If sibling adaptation is genuinely ambiguous, ask one clarifying question before editing the issues.
+
+### Test ownership rule
+- Prefer the nearest existing test class already owning the same capability in the requested layer.
+- Do not create a parallel concept name when an equivalent one already exists.
+- Reuse the existing root class name when extending a test suite.
+
+### Workspace reality rule
+- A test class counts as existing only if a real file exists in the workspace under the requested layer test source set.
+- A scenario counts as already covered only if a real test method matching the documented `ScenarioN` can be found in that real workspace file.
+- Do not rely on chat attachments, editor snapshots, copied snippets in the conversation, build outputs, or stale prior context as proof that a test file exists.
+- If the scenario is mapped to an existing number but no real workspace test method covers it yet, treat it as missing coverage and create or extend the real test file.
+
+### Validation reality rule
+- `BUILD SUCCESSFUL` is not sufficient evidence that the requested test actually ran.
+- A targeted validation is considered valid only if at least one matching test method is proven to have executed.
+- Confirm real execution by checking the targeted test output and, when needed, the generated test results for the requested class or method.
+- If the selector ran zero tests, matched nothing, or left no evidence that the targeted test ran, return `BLOCKED` instead of `RED`.
+- If a reused scenario is already covered by a real workspace test and that targeted test already passes, return `BLOCKED` with notes explaining that no new Red was created because the scenario is already covered.
+
+### Red test design rule
+- Translate each selected `Scenario:` into executable Arrange/Act/Assert code that reflects its `Given/When/Then` steps.
+- Build the business inputs named by the scenario, execute one concrete action, and assert the observable outcome expected by the issue.
+- Prefer failure through unmet assertions, wrong exception type/message, or wrong observable state/output over an unconditional placeholder failure.
+- If the owning production abstraction does not exist yet, add only the minimum requested-layer test-local seam needed to express the scenario while keeping the test behavior-focused.
+- A Red test is invalid if its only failure mechanism is `fail(...)`, `Assertions.fail(...)`, `throw new UnsupportedOperationException(...)`, an empty body, or a TODO comment.
+
 ## Instructions
-1. Analyze the provided scenario description carefully.
-    - If the scenario description is provided as an issue reference, retrieve the issue content and extract the specified scenario.
-    - If the scenario description is provided directly, use it as is.
-    - If the scenario already exists, create and maintain the corresponding test suite for each architecture layer (application, domain, and infrastructure) by using the existing files following the naming convention: application_{feature_name}.md, domain_{feature_name}.md, and infrastructure_{feature_name}.md.
-    - If the scenario does not already exist, first analyze the missing behavior and complete the related issues for each architecture layer (application, domain, and infrastructure) in a new scenario. Once the implementation details and issues are fully defined, create the corresponding tests for each layer to ensure the new scenario is properly covered.
-2. Check if a test file already exists for the scope of this test scenario.
-   - If it exists, append the new test case to the existing file.
-   - If it does not exist, create a new test file in the appropriate directory structure based on the module (domain, application, infrastructure).
-3. Write the test case so it accurately reflects the scenario and is expected to fail initially. You MUST follow the testing guidelines for the module you are currently working on:
-    - for the domain module, follow the guidelines in `docs/agents/instructions/domain-testing.instructions.md`
-    - for the application module, follow the guidelines in `docs/agents/instructions/application-testing.instructions.md`
-    - for the infrastructure module, follow the guidelines in `docs/agents/instructions/infrastructure-testing.instructions.md`
-4. Run the test to confirm it fails.
+1. Parse the requested `couche` and the full `Feature:` block.
+2. Search the repository for the nearest existing feature folder, split issue files, and test class for that capability.
+3. For each input scenario:
+   - map it to an existing documented scenario number when semantically equivalent
+   - otherwise assign the next available scenario number
+   - record whether the scenario was `reused` or `added`
+4. Update the split issue files before touching tests.
+   - Update the requested layer issue with the scenario text adapted to that layer.
+   - Keep numbering aligned in sibling split issues for the same feature.
+5. Locate the target test class for the requested layer.
+  - Verify that the file really exists in the workspace before treating it as an existing class.
+  - If the scenario was reused, verify that the exact matching `ScenarioN` test method really exists in the workspace before treating the scenario as already covered.
+6. Create or extend only the failing tests for the requested scenarios in that layer.
+  - Translate the scenario steps into concrete inputs, one action, and explicit observable assertions.
+  - Keep the test focused on the documented business behavior for that scenario.
+  - If a seam is missing, add only the minimum requested-layer test-local seam required to express the scenario without touching production code.
+7. Run the narrowest requested-layer validation to confirm the new tests fail.
+  - Target the exact class or exact test method whenever possible.
+  - Verify that at least one matching test method actually executed.
+  - If the targeted scenario is already covered by a real workspace test and that test passes, stop and return `BLOCKED`.
+  - If the selector produced no proof that the target test ran, stop and return `BLOCKED`.
+8. Return only valid JSON.
 
 ## Requirements
-- You **MUST** follow the guidelines for the module you are currently working on.
-- **NEVER** implement any production code in this step. Your ONLY goal is to write a failing test.
-- You **MUST** ensure the test fails when executed.
-- The name of the test method should be descriptive and follow the naming conventions outlined in the testing guidelines.
+- You **MUST** work on one layer only.
+- You **MUST** mutualize scenario numbering in `docs/features/...` before writing tests.
+- You **MUST** return the scenario numbers that were added.
+- You **MUST** also return the scenario numbers that were reused when applicable.
+- You **MUST** translate each requested scenario into a concrete behavior-oriented test with explicit arrange/act/assert steps tied to the Gherkin.
+- You **MUST** make the requested test fail because the scenario behavior is not yet satisfied, not because of an unconditional placeholder failure.
+- You **MUST NOT** invent a new `ScenarioN` suffix if an equivalent documented scenario already exists.
+- You **MUST NOT** update tests in another layer during this prompt.
+- You **MUST NOT** implement production code in this step.
+- You **MUST NOT** use `fail(...)`, `Assertions.fail(...)`, `throw new UnsupportedOperationException(...)`, or an equivalent placeholder as the sole failure mechanism of the requested scenario test.
+- You **MUST** verify the real workspace existence of the selected test file before claiming that the class already exists.
+- You **MUST** verify the real workspace existence of the selected `ScenarioN` test method before claiming that a scenario is already covered.
+- You **MUST NOT** rely on chat attachments, chat selections, editor snapshots, or previous conversation snippets as evidence that a file or method exists in the repository.
+- You **MUST** ensure the requested-layer validation is red when the prompt completes successfully.
+- You **MUST NOT** treat a bare `BUILD SUCCESSFUL` result from a `--tests` selector as proof that the targeted test ran.
+- You **MUST** confirm that at least one targeted test method actually executed before concluding `RED`.
+- You **MUST** return `BLOCKED` when the targeted selector matched no real tests or when the requested scenario is already covered by a passing real workspace test.
+- You **MUST** follow the testing instructions for the requested layer:
+  - `docs/agents/instructions/application-testing.instructions.md`
+  - `docs/agents/instructions/domain-testing.instructions.md`
+  - `docs/agents/instructions/infrastructure-testing.instructions.md`
 
-## Routing and CRITICAL rules
-- If the input references an issue in `docs/features/{feature}/`, determine the appropriate module from the issue filename or the scenario context. If ambiguous, prefer `domain` and ask one clarifying question.
-- CRITICAL: Do not produce or modify production code. If a code snippet is required for the test harness, place it under `tests/` or `tests_helpers/` only and mark it as a test double.
-- CRITICAL: If the agent is tempted to implement business logic to make the test pass, refuse and only create the test file.
+## Hard stops
+- Do not create a parallel feature folder just because the scenario wording uses a different verb.
+- Do not create a parallel test class when an existing class already owns the capability.
+- Do not create or modify production code under `application/src/main`, `domain/src/main`, or `infrastructure/src/main`.
+- Do not create concrete persistence implementations in `application` or `domain` tests.
+- Do not make application tests talk directly to infrastructure types.
+- Do not make infrastructure tests re-implement domain business rules.
+- Do not create a placeholder test whose only red signal is `fail(...)`, `Assertions.fail(...)`, `throw new UnsupportedOperationException(...)`, or a TODO marker.
+- Do not use build outputs, attachments, or editor-only context as substitutes for checking the actual workspace files.
+- Do not report `RED` if no targeted test method was proven to execute.
 
-## Naming conventions and examples
-- Test file naming: for domain tests use `domain/src/test/.../XxxTest.java` or for lightweight Python tests use `tests/tdd/test_<feature>_<case>.py`.
-- Test method naming: `should<ExpectedBehavior>When<Condition><ScenarioNumberX>` (e.g., `shouldCreateOrderWhenItemAvailable`).
-- If the test already exists, rename him with the same convention and add a scenario number at the end if needed (e.g., `shouldCreateOrderWhenItemAvailableScenario2`).
+## JSON output contract
 
-## Additional negative examples
-- Do NOT merge multiple modules in a single test file when the issue was split per module. Generate one test per module scope.
-- Do NOT add production classes under `domain/src/main`/`application/src/main`/`infrastructure/src/main` in this step.
+Return a single valid JSON object with this shape:
 
-## Examples
-
-### Domain test example : file does not yet exist
-
-Input :
-Scenario Description: Scenario: Successfully export contacts
-Given a user with 20 contacts
-When executing a query to fetch contacts
-Then the system retrieves all 20 contacts and generates an export DTO
-
-Expected Output :
-
-- a new file `domain/src/test/java/com/example/domain/contact/ContactExportUseCaseTest.java` is created with the following content :
-
-```java
-package com.example.domain.contact;
-
-import com.example.domain.test.fixture.ContactExportFixture;
-import com.example.domain.test.state.TestState;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import static org.assertj.core.api.Assertions.assertThat;
-
-class ContactExportUseCaseTest {
-
-    private ContactExportFixture fixture;
-
-    @BeforeEach
-    void setUp() {
-        fixture = new ContactExportFixture();
+```json
+{
+  "status": "RED | BLOCKED",
+  "requestedLayer": "application | domain | infrastructure",
+  "featureFolder": "string",
+  "resolvedIssueFiles": ["string"],
+  "selectedScenarioNumbers": [1],
+  "addedScenarioNumbers": [1],
+  "reusedScenarioNumbers": [1],
+  "scenarioMappings": [
+    {
+      "inputScenarioTitle": "string",
+      "scenarioNumber": 1,
+      "action": "added | reused"
     }
-
-    @Test
-    void shouldProduceExportDtoWhenContactsExist() {
-        // Given a user with 20 contacts
-        TestState<User> userTestState = fixture.getUserTestState();
-        TestState<Contact> contactTestState = fixture.getContactTestState();
-        UseCaseHandler<ExportContactQuery, ContactExportDto> handler = fixture.getUseCaseHandler();
-
-        User user = new User("user1");
-        userTestState.add(user);
-        List<Contact> contacts = IntStream.range(0, 20)
-                .mapToObj(i -> new Contact("Contact " + i, "contact" + i + "@example.com"))
-                .collect(Collectors.toList());
-        contacts.forEach(contactTestState::add);
-
-        // When executing a query to fetch contacts
-        ExportContactQuery query = new ExportContactQuery(user.getId());
-        ContactExportDto exportDto = handler.execute(query);
-
-        // Then the system retrieves all 20 contacts and generates an export DTO
-        assertThat(exportDto).isNotNull();
-        assertThat(exportDto.getContacts()).hasSize(20);
+  ],
+  "targetTestClass": {
+    "layer": "application | domain | infrastructure",
+    "testFilePath": "string",
+    "testClassName": "string",
+    "status": "FAILED | NOT_RUN | BLOCKED"
+  },
+  "modifiedFiles": ["string"],
+  "executedTests": ["string"],
+  "testResults": {
+    "<testClassName>": {
+      "<testMethodName>": "FAILED | NOT_RUN"
     }
+  },
+  "notes": ["string"]
 }
 ```
 
-## Negative examples and tips
-- Do not implement production code in this prompt: only tests that initially fail.
-- If the scenario is ambiguous, ask 1–2 clarifying questions before writing the test.
-- Prefer concise, focused test cases that exercise one behavior at a time.
+## Example output
+```json
+{
+  "status": "RED",
+  "requestedLayer": "application",
+  "featureFolder": "docs/features/passer-commande-boisson",
+  "resolvedIssueFiles": [
+    "docs/features/passer-commande-boisson/application_passer-commande-boisson.md",
+    "docs/features/passer-commande-boisson/domain_passer-commande-boisson.md",
+    "docs/features/passer-commande-boisson/infrastructure_passer-commande-boisson.md"
+  ],
+  "selectedScenarioNumbers": [4, 5, 6],
+  "addedScenarioNumbers": [5, 6],
+  "reusedScenarioNumbers": [4],
+  "scenarioMappings": [
+    {
+      "inputScenarioTitle": "Commande creee avec succes",
+      "scenarioNumber": 4,
+      "action": "reused"
+    },
+    {
+      "inputScenarioTitle": "Requete refusee si le festivalier n'est pas authentifie",
+      "scenarioNumber": 5,
+      "action": "added"
+    },
+    {
+      "inputScenarioTitle": "Requete refusee si le corps de la requete est invalide",
+      "scenarioNumber": 6,
+      "action": "added"
+    }
+  ],
+  "targetTestClass": {
+    "layer": "application",
+    "testFilePath": "application/src/test/java/com/example/application/order/PlaceDrinkOrderControllerTest.java",
+    "testClassName": "com.example.application.order.PlaceDrinkOrderControllerTest",
+    "status": "FAILED"
+  },
+  "modifiedFiles": [
+    "docs/features/passer-commande-boisson/application_passer-commande-boisson.md",
+    "application/src/test/java/com/example/application/order/PlaceDrinkOrderControllerTest.java"
+  ],
+  "executedTests": [
+    "./gradlew :application:test --tests com.example.application.order.PlaceDrinkOrderControllerTest"
+  ],
+  "testResults": {
+    "com.example.application.order.PlaceDrinkOrderControllerTest": {
+      "shouldReturnUnauthorizedWhenSubmittingAvailableDrinkOrderWithoutFestivalGoerIdentifierScenario5": "FAILED"
+    }
+  },
+  "notes": [
+    "Scenario numbering was kept aligned across split issues.",
+    "Only the application layer received new failing tests."
+  ]
+}
+```
 
-## References
-- `templates/issue.md`
-- `scripts/validate_issue_format.py`
-- `docs/features/` (generated issues with Gherkin scenarios)
-
-<!-- Notes personnelles :
-
-J'ai ajouté : - If the scenario already exists, create and maintain the corresponding test suite for each architecture layer (application, domain, and infrastructure) by using the existing files following the naming convention: application_{feature_name}.md, domain_{feature_name}.md, and infrastructure_{feature_name}.md.
-
-Pour pouvoir completer les issues et ajouter des scenario de tests, ce qui peux être très utile pour faire évoluer les features et les tests au fur et à mesure de l'avancement du projet.
-
-- If the scenario does not already exist, first analyze the missing behavior and complete the related issues for each architecture layer (application, domain, and infrastructure) in a new scenario. Once the implementation details and issues are fully defined, create the corresponding tests for each layer to ensure the new scenario is properly covered.
-
-Pour créer des tests dans chaque couche même si le scénario n'existe, c'est peut être un peu trop. J'ai tendance à mettre des tests uniquement dans la couche ou le comportement est implémenté, mais ça peux être intéressant de créer les tests dans les autres couches pour forcer l'implémentation à être plus complète et éviter d'oublier des cas de tests et vu que cela ne prend pas plus de temps. A voir à l'usage si c'est pertinent ou pas.-->
+## Example blocked output
+```json
+{
+  "status": "BLOCKED",
+  "requestedLayer": "domain",
+  "featureFolder": "docs/features/passer-commande-boisson",
+  "resolvedIssueFiles": [
+    "docs/features/passer-commande-boisson/application_passer-commande-boisson.md",
+    "docs/features/passer-commande-boisson/domain_passer-commande-boisson.md",
+    "docs/features/passer-commande-boisson/infrastructure_passer-commande-boisson.md"
+  ],
+  "selectedScenarioNumbers": [4],
+  "addedScenarioNumbers": [],
+  "reusedScenarioNumbers": [4],
+  "scenarioMappings": [
+    {
+      "inputScenarioTitle": "Commande simple avec un article disponible",
+      "scenarioNumber": 4,
+      "action": "reused"
+    }
+  ],
+  "targetTestClass": {
+    "layer": "domain",
+    "testFilePath": "domain/src/test/java/com/example/domain/order/PlaceDrinkOrderUseCaseTest.java",
+    "testClassName": "com.example.domain.order.PlaceDrinkOrderUseCaseTest",
+    "status": "BLOCKED"
+  },
+  "modifiedFiles": [],
+  "executedTests": [
+    "./gradlew :domain:test --tests com.example.domain.order.PlaceDrinkOrderUseCaseTest.shouldCreatePendingOrderWithIdentifierWhenOrderingAvailableArticleScenario4"
+  ],
+  "testResults": {},
+  "notes": [
+    "The selector did not provide enough evidence that a real targeted test method executed.",
+    "No new Red was created because the prompt could not prove missing coverage in the real workspace."
+  ]
+}
+```

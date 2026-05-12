@@ -26,12 +26,25 @@ Then aucun debit de jetons partiel n'est conserve
 And l'application recoit une erreur technique exploitable
 
 Scenario: 4 - Creer une commande en attente pour un article disponible
-Given un article "Mojito" disponible en stock dans le catalogue
-And une demande de commande pour 1 "Mojito"
-When l'infrastructure cree la commande initiale
+Given un festivalier identifie et un article "Mojito" disponible en stock dans le catalogue
+When l'infrastructure cree la commande initiale pour 1 "Mojito"
 Then la commande stockee porte le statut "EN_ATTENTE"
 And un identifiant de commande non vide est genere
+
+Scenario: 5 - Refuser la creation de commande si l'identifiant du festivalier est vide
+Given une demande de commande avec un identifiant festivalier vide
+And l'article "Mojito" est disponible dans le catalogue
+When l'infrastructure cree la commande initiale
+Then l'infrastructure retourne une erreur de validation technique
+And aucune commande n'est stockee
+
+Scenario: 6 - Refuser la creation de commande si aucun article n'est fourni
+Given une demande de commande sans article exploitable
+When l'infrastructure cree la commande initiale
+Then l'infrastructure retourne une erreur de validation technique
+And aucune commande n'est stockee
 
 **Notes**
 - Les ecritures commande et jetons doivent rester coherentes.
 - Les erreurs techniques doivent etre remontees sans masquer la cause fonctionnelle.
+- Une commande simple sur un article disponible reste valable pour toute quantite strictement positive.

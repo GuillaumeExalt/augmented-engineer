@@ -27,12 +27,27 @@ And le message explique que le solde de jetons boisson est insuffisant
 
 Scenario: 4 - Soumettre une commande simple avec un article disponible
 Given un festivalier identifie
-And un article "Mojito" disponible en stock
+And l'article "Mojito" est disponible dans le catalogue
 When il appelle le endpoint de creation de commande pour 1 "Mojito"
 Then l'application retourne un succes de creation
 And la reponse contient le statut "EN_ATTENTE"
 And la reponse contient un identifiant de commande non vide
 
+Scenario: 5 - Refuser une commande si le festivalier n'est pas identifie
+Given aucun identifiant festivalier exploitable dans la requete
+And un article "Mojito" disponible en stock
+When il appelle le endpoint de creation de commande pour 1 "Mojito"
+Then l'application retourne une erreur d'authentification
+And le statut HTTP retourne est 401
+
+Scenario: 6 - Refuser une commande si aucun article n'est fourni dans la requete
+Given un festivalier identifie
+And aucun article n'est fourni dans la requete
+When il appelle le endpoint de creation de commande
+Then l'application retourne une erreur de validation
+And le statut HTTP retourne est 400
+
 **Notes**
 - Le contrat d'entree doit distinguer boisson non alcoolisee, alcool normale et alcool premium.
 - Les messages d'erreur doivent etre explicites pour l'utilisateur.
+- Une commande simple sur un article disponible reste valable pour toute quantite strictement positive.

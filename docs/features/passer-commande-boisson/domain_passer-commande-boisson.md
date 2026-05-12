@@ -25,14 +25,29 @@ When il commande une boisson alcool premium
 Then la commande est rejetee
 And le solde de jetons boisson reste a 1
 
-Scenario: 4 - Creer une commande en attente pour un article disponible
+Scenario: 4 - Commande simple avec un article disponible
 Given un festivalier identifie
 And un article "Mojito" disponible en stock
-When il commande 1 "Mojito"
+When il passe une commande pour 1 "Mojito"
 Then la commande est creee avec le statut "EN_ATTENTE"
-And un identifiant de commande non vide est attribue
+And le festivalier recoit un identifiant de commande
+
+Scenario: 5 - Rejeter une commande si l'identifiant du festivalier est vide
+Given un festivalier sans identifiant exploitable
+And un article "Mojito" disponible en stock
+When il commande 1 "Mojito"
+Then la commande est rejetee
+And aucune commande en attente n'est creee
+
+Scenario: 6 - Rejeter une commande si aucun article n'est demande
+Given un festivalier identifie
+And aucune demande d'article exploitable n'est fournie
+When il demande la creation de la commande
+Then la commande est rejetee
+And aucune commande en attente n'est creee
 
 **Notes**
 - Une boisson non alcoolisee coute 0 jeton boisson.
 - Une boisson alcool normale coute 1 jeton boisson.
 - Une boisson alcool premium coute 2 jetons boisson.
+- Une commande simple sur un article disponible reste valable pour toute quantite strictement positive.

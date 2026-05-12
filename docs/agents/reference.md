@@ -11,6 +11,14 @@ Les issues sont des fichiers Markdown autonomes avec les sections suivantes :
 | `**Critères d'acceptation**` | ✅ | Un bloc Gherkin `Feature:` avec 1–N entrées `Scenario:` couvrant le chemin heureux et les cas limites. |
 | `**Notes**` | ❌ | Optionnel. Toutes références supplémentaires, contraintes, ou questions ouvertes. |
 
+## Alignement entre issues et tests
+
+- Les `Scenario:` documentes dans `docs/features/...` sont la source de verite pour les tests de scenario.
+- Un test ne peut utiliser un suffixe `ScenarioN` que si ce numero existe deja dans l'issue ou la feature correspondante.
+- Les tests supplementaires utiles mais hors scenario d'acceptation ne doivent jamais etre numerotes comme de faux scenarios.
+- Pour ces tests hors scenario, utilisez un nom descriptif classique, avec `TechnicalCase` ou `RegressionCase` si un suffixe explicite est utile.
+- Si un nouveau scenario d'acceptation est necessaire, il faut d'abord mettre a jour la documentation fonctionnelle avant de creer un test `ScenarioN`.
+
 ## Conventions de nommage et architecture
 
 Suivre l'Architecture Hexagonale comme décrit dans AGENTS.md.

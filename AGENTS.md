@@ -39,6 +39,14 @@ You should start you answers with :
 - When you show me a potential error or miss, start your response with❗️emoji
 - If the scope of the work seems too big, suggest the user to break it down into smaller pieces. Start your message with the ✂️ emoji in that case.
 
+### MAJOR : Scenario/Test Alignment
+
+- When generating or updating tests from a feature issue, treat the documented `Scenario:` entries in `docs/features/...` as the source of truth.
+- A test may use a `ScenarioN` suffix only when it maps directly to an existing documented scenario number. Never invent `Scenario7`, `Scenario8`, etc. if the issue stops earlier.
+- If you add useful tests that are not explicit acceptance scenarios from the issue (technical guard rails, exception cases, collaboration checks, regressions, mapping checks), do not label them with `ScenarioN`.
+- For those extra tests, use the regular descriptive test name and append `TechnicalCase` or `RegressionCase` when an explicit suffix is useful.
+- If a missing numbered scenario is actually needed for the feature, update the issue or feature documentation first instead of silently creating a new numbered scenario in tests.
+
 ## Architectural Context
 
 The project follows a Hexagonal Architecture (Ports and Adapters), organized into distinct Modules :
