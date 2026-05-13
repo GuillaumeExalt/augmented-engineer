@@ -1,3 +1,5 @@
+<!--Je n'ai pas au besoin de completer et de stabiliser les agents, car je l'avais déjà dans le prompt pour avoir quelque chose de solide, qui resiste à pas mal de cas -->
+
 ---
 name: TDD Green step
 description: "Use when you want to make one layer green from a Red-step JSON result: consume one Red output object, target only the resolved layer and scenario numbers, implement only that slice in test code, and return JSON for a layer-scoped Refactor step. For application API slices, keep the temporary seam shaped like a future framework-backed HTTP controller instead of a plain Java object. For infrastructure persistence slices, keep the temporary seam shaped like a future JPA-backed adapter that will implement an existing or to-be-extracted pure-domain port, use separate persistence types when needed, and leave clear notes for Refactor about the required JPA entities, mapper, and wiring."
