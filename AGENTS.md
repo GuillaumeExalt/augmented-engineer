@@ -42,10 +42,11 @@ You should start you answers with :
 ### MAJOR : Scenario/Test Alignment
 
 - When generating or updating tests from a feature issue, treat the documented `Scenario:` entries in `docs/features/...` as the source of truth.
+- Unless the user explicitly asks for a functional documentation update, never edit, reorder, rename, split, merge, or rewrite the documented `Scenario:` entries in `docs/features/...`.
 - A test may use a `ScenarioN` suffix only when it maps directly to an existing documented scenario number. Never invent `Scenario7`, `Scenario8`, etc. if the issue stops earlier.
 - If you add useful tests that are not explicit acceptance scenarios from the issue (technical guard rails, exception cases, collaboration checks, regressions, mapping checks), do not label them with `ScenarioN`.
 - For those extra tests, use the regular descriptive test name and append `TechnicalCase` or `RegressionCase` when an explicit suffix is useful.
-- If a missing numbered scenario is actually needed for the feature, update the issue or feature documentation first instead of silently creating a new numbered scenario in tests.
+- If a missing numbered scenario is actually needed for the feature, stop and ask for an explicit documentation change instead of silently creating a new numbered scenario in tests or modifying the existing scenarios yourself.
 
 ## Architectural Context
 
@@ -59,10 +60,13 @@ The project follows a Hexagonal Architecture (Ports and Adapters), organized int
 - **Domain Module** (`belair-buvette-domain`), located in {repository_root}/domain/ : the hexagon core, containing the Domain Entities, Value Objects, Domain Services, Ports definitions, and Use Cases implementations.
     - Independent of other modules, focusing solely on business logic and rules.
     - Defines interfaces (Ports) for driven adapters (repositories, external services)
+    - Any domain use case that needs to load, persist, publish, or otherwise access external state must declare and use domain ports instead of assuming the caller will persist later.
+    - Returning a domain result object is allowed, but it must not replace a required persistence or external interaction through a port.
     - Use Cases and their related Commands/Query are used as Primary Adapters to expose business operations to the Application Module.
 - **Infrastructure Module** (`belair-buvette-infrastructure`), located in {repository_root}/infrastructure/ : containing the technical implementations of the Ports defined in the Domain Module.
   - Depends on the Domain Module to implement the defined Ports.
   - Implements persistence (repositories), external service integrations, and other technical concerns.
+  - Database access must be implemented in infrastructure adapters that implement the domain ports; the domain must never depend directly on JPA, SQL, or infrastructure classes.
   - Handles database interactions, external API calls, and other infrastructure-related tasks.
 
   ## Repository Structure
