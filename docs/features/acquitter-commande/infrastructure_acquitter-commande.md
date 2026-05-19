@@ -1,5 +1,7 @@
 # Acquitter une commande et fournir un temps estime - Infrastructure
 
+<!-- github-issue: GuillaumeExalt/augmented-engineer#3 -->
+
 **Contexte**
 L'infrastructure doit persister l'acquittement et l'ETA de la commande, puis envoyer la notification au festivalier de facon fiable.
 

@@ -81,6 +81,7 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 - If an equivalent scenario already exists in the requested issue or in a sibling split issue, reuse that exact scenario number.
 - If the scenario is new, assign the next available scenario number for that feature family.
 - When a new scenario number is added, update all existing sibling split issue files for the same feature so numbering stays aligned across layers.
+- Preserve any existing `<!-- github-issue: owner/repo#123 -->` sync marker comment when updating split issue files.
 - Use the requested layer scenario wording as the source of truth for the requested issue file.
 - Adapt the sibling issue wording with the closest existing ubiquitous language already present in the repository.
 - If sibling adaptation is genuinely ambiguous, ask one clarifying question before editing the issues.

@@ -1,5 +1,7 @@
 # Modifier une commande - Application
 
+<!-- github-issue: GuillaumeExalt/augmented-engineer#7 -->
+
 **Contexte**
 La couche application expose la demande de modification de commande et applique le bon parcours selon l'etat de la commande: modification immediate si non acquittee, ou creation d'une demande de changement si deja acquittee.
 
