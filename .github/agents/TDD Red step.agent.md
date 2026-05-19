@@ -1,5 +1,3 @@
-<!--Je n'ai pas au besoin de completer et de stabiliser les agents, car je l'avais déjà dans le prompt pour avoir quelque chose de solide, qui resiste à pas mal de cas -->
-
 ---
 name: TDD Red step
 description: "Use when you want to work one layer at a time in Red TDD: parse a couche plus Feature/Scenario block, mutualize scenario numbering in docs/features split issues, create behavior-shaped failing tests for that layer, and return the scenario numbers that were added or reused. For application API slices, create failing tests through a real HTTP-facing entrypoint or web test harness rather than direct method calls on a plain Java object."
@@ -396,3 +394,5 @@ Return a single valid JSON object with this shape:
   "test_method_name": "Export_WhenUserHasContacts_ShouldReturnAllContactsInExportDto"
 }
 ```
+<!--Je n'ai pas au besoin de completer et de stabiliser les agents, car je l'avais déjà dans le prompt pour avoir quelque chose de solide, qui resiste à pas mal de cas -->
+
