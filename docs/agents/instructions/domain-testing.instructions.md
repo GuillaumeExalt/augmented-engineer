@@ -2,6 +2,7 @@
 
 - Use JUnit 5 for unit tests.
 - Keep tests pure: do not touch external resources.
+- When a domain use case depends on persistence or external state, test it through fakes/mocks/stubs of domain ports rather than a real database or infrastructure class.
 - Use fixtures or test state helpers located under `domain/src/test/java/.../fixture`.
 - Test names should be descriptive: `should<ExpectedBehavior>When<Condition>`.
 - Reserve a `ScenarioN` suffix for tests that map 1:1 to an existing numbered scenario in `docs/features/...`.

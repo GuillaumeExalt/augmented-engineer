@@ -59,10 +59,13 @@ The project follows a Hexagonal Architecture (Ports and Adapters), organized int
 - **Domain Module** (`belair-buvette-domain`), located in {repository_root}/domain/ : the hexagon core, containing the Domain Entities, Value Objects, Domain Services, Ports definitions, and Use Cases implementations.
     - Independent of other modules, focusing solely on business logic and rules.
     - Defines interfaces (Ports) for driven adapters (repositories, external services)
+    - Any domain use case that needs to load, persist, publish, or otherwise access external state must declare and use domain ports instead of assuming the caller will persist later.
+    - Returning a domain result object is allowed, but it must not replace a required persistence or external interaction through a port.
     - Use Cases and their related Commands/Query are used as Primary Adapters to expose business operations to the Application Module.
 - **Infrastructure Module** (`belair-buvette-infrastructure`), located in {repository_root}/infrastructure/ : containing the technical implementations of the Ports defined in the Domain Module.
   - Depends on the Domain Module to implement the defined Ports.
   - Implements persistence (repositories), external service integrations, and other technical concerns.
+  - Database access must be implemented in infrastructure adapters that implement the domain ports; the domain must never depend directly on JPA, SQL, or infrastructure classes.
   - Handles database interactions, external API calls, and other infrastructure-related tasks.
 
   ## Repository Structure

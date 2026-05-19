@@ -24,7 +24,10 @@ Les issues sont des fichiers Markdown autonomes avec les sections suivantes :
 Suivre l'Architecture Hexagonale comme décrit dans AGENTS.md.
 
 - **Ports** : Les interfaces se terminent par "Port", e.g., `OrderRepositoryPort`
+- **Ports sortants** : Toute lecture/ecriture de base de donnees, publication d'evenement, appel HTTP, ou acces a un systeme externe requis par un use case domaine doit passer par une interface definie dans le domaine (`domain/.../port/out/...`).
+- **Use cases domaine** : Un use case ne doit pas se contenter de retourner un objet en esperant qu'une couche suivante persiste plus tard l'etat metier si la persistance fait partie du comportement attendu; il doit appeler le ou les ports necessaires.
 - **Adaptateurs** : Les classes se terminent par "Adapter", e.g., `JpaOrderRepositoryAdapter`
+- **Infrastructure** : L'infrastructure implemente les ports du domaine et porte les details techniques (JPA, SQL, mapping, transaction, clients externes). Elle ne redefinit pas le contrat metier.
 - **Cas d'usage** : Les classes se terminent par "UseCase", e.g., `PlaceOrderUseCase`
 - **Entités** : Classes dans le domaine, e.g., `Order`, `FestivalGoer`
 - **DTOs** : Dans l'application, e.g., `OrderRequestDto`
