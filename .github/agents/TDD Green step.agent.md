@@ -1,4 +1,3 @@
-<!--Je n'ai pas au besoin de completer et de stabiliser les agents, car je l'avais déjà dans le prompt pour avoir quelque chose de solide, qui resiste à pas mal de cas -->
 
 ---
 name: TDD Green step
@@ -293,3 +292,6 @@ Return a single valid JSON object with this shape:
   "implemented_code": ["InMemoryContactRepository", "ContactExportService"]
 }
 ```
+
+<!--Je n'ai pas au besoin de completer et de stabiliser les agents, car je l'avais déjà dans le prompt pour avoir quelque chose de solide, qui resiste à pas mal de cas -->
+
