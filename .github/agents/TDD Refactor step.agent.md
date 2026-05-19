@@ -1,5 +1,3 @@
-<!--Je n'ai pas au besoin de completer et de stabiliser les agents, car je l'avais déjà dans le prompt pour avoir quelque chose de solide, qui resiste à pas mal de cas -->
-
 ---
 name: TDD Refactor step
 description: "Use when you want to refactor only one layer and only the selected scenario numbers from a layer-scoped Green result: move production-worthy code out of tests for that slice, keep behavior unchanged, keep the targeted tests green after each micro-step, isolate non-trivial mapping code in dedicated mapper packages, promote application API slices to real framework-backed controllers with route metadata and minimum web wiring, and for infrastructure persistence slices extract the minimum pure-domain repository contract when needed before promoting a real JPA-backed repository with separate persistence entities, mapper, and JPA configuration."
@@ -378,3 +376,5 @@ Return a single valid JSON object with this shape:
   "refactored_code": ["PlaceDrinkOrderController", "CreateDrinkOrderRequest", "CreateDrinkOrderResponse"]
 }
 ```
+<!--Je n'ai pas au besoin de completer et de stabiliser les agents, car je l'avais déjà dans le prompt pour avoir quelque chose de solide, qui resiste à pas mal de cas -->
+
