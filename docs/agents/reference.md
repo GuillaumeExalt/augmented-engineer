@@ -14,10 +14,11 @@ Les issues sont des fichiers Markdown autonomes avec les sections suivantes :
 ## Alignement entre issues et tests
 
 - Les `Scenario:` documentes dans `docs/features/...` sont la source de verite pour les tests de scenario.
+- Sauf demande explicite de mise a jour fonctionnelle, il est interdit de modifier, reordonner, renommer, fusionner, scinder ou reecrire les `Scenario:` documentes dans `docs/features/...`.
 - Un test ne peut utiliser un suffixe `ScenarioN` que si ce numero existe deja dans l'issue ou la feature correspondante.
 - Les tests supplementaires utiles mais hors scenario d'acceptation ne doivent jamais etre numerotes comme de faux scenarios.
 - Pour ces tests hors scenario, utilisez un nom descriptif classique, avec `TechnicalCase` ou `RegressionCase` si un suffixe explicite est utile.
-- Si un nouveau scenario d'acceptation est necessaire, il faut d'abord mettre a jour la documentation fonctionnelle avant de creer un test `ScenarioN`.
+- Si un nouveau scenario d'acceptation est necessaire, il faut demander une mise a jour explicite de la documentation fonctionnelle avant de creer un test `ScenarioN`.
 
 ## Conventions de nommage et architecture
 

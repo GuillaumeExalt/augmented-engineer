@@ -42,10 +42,11 @@ You should start you answers with :
 ### MAJOR : Scenario/Test Alignment
 
 - When generating or updating tests from a feature issue, treat the documented `Scenario:` entries in `docs/features/...` as the source of truth.
+- Unless the user explicitly asks for a functional documentation update, never edit, reorder, rename, split, merge, or rewrite the documented `Scenario:` entries in `docs/features/...`.
 - A test may use a `ScenarioN` suffix only when it maps directly to an existing documented scenario number. Never invent `Scenario7`, `Scenario8`, etc. if the issue stops earlier.
 - If you add useful tests that are not explicit acceptance scenarios from the issue (technical guard rails, exception cases, collaboration checks, regressions, mapping checks), do not label them with `ScenarioN`.
 - For those extra tests, use the regular descriptive test name and append `TechnicalCase` or `RegressionCase` when an explicit suffix is useful.
-- If a missing numbered scenario is actually needed for the feature, update the issue or feature documentation first instead of silently creating a new numbered scenario in tests.
+- If a missing numbered scenario is actually needed for the feature, stop and ask for an explicit documentation change instead of silently creating a new numbered scenario in tests or modifying the existing scenarios yourself.
 
 ## Architectural Context
 
