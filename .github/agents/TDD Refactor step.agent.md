@@ -70,6 +70,10 @@ Optional Green handoff hints:
   - move response DTOs under `model/out`
   - move request-to-domain and domain-to-response translation under `mapper` when DTOs and domain models are distinct or the mapping is more than trivial field passthrough
   - keep the controller focused on transport concerns and delegation, not non-trivial object mapping logic
+  - controllers must not inject or call business repositories or ports directly, must not load entities or inspect domain state to branch business behavior, and must not trigger notifications directly
+  - pass actor identity and ownership-relevant inputs into the application use case instead of enforcing ownership in the controller
+  - move production-worthy orchestration under an `application/usecase` package or equivalent use case class, not into the controller or mapper
+  - keep HTTP mappers limited to DTO <-> use-case command/result translation; they must not compute business state transitions, updated lines, pricing totals, or token balances
   - add the minimum web framework and test wiring required by the selected scenarios when no real HTTP surface exists yet and that wiring stays within the slice
   - do not create domain or infrastructure production code here
 - `domain`:
@@ -96,6 +100,7 @@ Optional Green handoff hints:
 - For those scenarios, `REFACTORED` means explicit route declaration or handler metadata for the documented HTTP method and path, plus real request/response binding for the selected slice.
 - If the project currently lacks a web framework for the selected application slice, add only the minimum web framework and controller-test wiring needed for the selected scenarios; otherwise return `BLOCKED` rather than shipping a fake controller.
 - Keep transport concerns in the controller and move non-trivial DTO-to-domain or domain-to-response mapping into a dedicated mapper when needed.
+- Keep entity loading, ownership or authorization checks, workflow branching, and notification triggering in the application use case or domain, never in the controller or mapper.
 - Do not declare `REFACTORED` for an application API slice if tests still prove behavior only by calling a plain Java method directly.
 
 ## Infrastructure persistence slice rule
@@ -153,6 +158,9 @@ Optional Green handoff hints:
 - You **MUST** extract dedicated mapper code in the owning layer when the selected slice translates between distinct application, domain, or persistence models with non-trivial mapping.
 - You **MUST** promote application API slices to a real framework-backed controller or handler with explicit route metadata for the documented HTTP method and path.
 - You **MUST** add the minimum web framework and test wiring required by the selected application scenarios when no real HTTP surface exists yet and that work stays within the slice.
+- You **MUST** keep controllers delegating to an application use case instead of injecting or calling business repositories or ports directly.
+- You **MUST** keep entity loading, ownership or authorization checks, workflow branching, and notification triggering in the application use case or domain.
+- You **MUST** keep HTTP mappers limited to DTO <-> use-case command/result translation, not business computations such as state transitions, updated lines, pricing totals, or token balances.
 - You **MUST** extract the minimum pure-domain repository port or interface first when an infrastructure repository slice needs it, and you **MUST** return `BLOCKED` if that prerequisite would exceed the selected scenario slice.
 - You **MUST** validate affected `domain`, `infrastructure`, and `application` tests when an infrastructure repository slice creates or changes shared production code.
 - You **MUST** choose JPA as the persistence technology for infrastructure persistence slices promoted during this prompt.
@@ -174,6 +182,7 @@ Optional Green handoff hints:
 - Do not create domain production classes from an application refactor slice.
 - Do not create infrastructure implementations from a domain refactor slice.
 - Do not move business validation rules into controllers.
+- Do not leave production-worthy orchestration in an application controller or mapper; move it into an application use case class or equivalent package.
 - Do not move technical persistence concerns into the domain.
 - Do not declare `REFACTORED` for an application API slice if the production controller remains a plain Java object called directly by tests.
 - Do not ship an application API slice without a real route or handler declaration for the documented method and path when the issue explicitly asserts HTTP behavior.
@@ -377,4 +386,3 @@ Return a single valid JSON object with this shape:
 }
 ```
 <!--Je n'ai pas au besoin de completer et de stabiliser les agents, car je l'avais déjà dans le prompt pour avoir quelque chose de solide, qui resiste à pas mal de cas -->
-

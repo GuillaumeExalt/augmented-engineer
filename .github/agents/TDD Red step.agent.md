@@ -72,7 +72,12 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 ### Layer rule
 - Only the requested `couche` may receive new or updated tests during this prompt.
 - `application` should prefer controller-entrypoint tests, transport DTO vocabulary, and real HTTP-facing test harnesses when scenarios mention requests, routes, status codes, or response bodies.
+- `application` controllers are transport-only seams: they may read HTTP inputs, apply basic HTTP validation, map DTO -> command, call a use case, and map result or exception to HTTP response.
+- `application` tests must not normalize controllers that inject or call business repositories or ports, load entities, inspect domain state for business branching, trigger notifications directly, or enforce ownership or authorization logic.
+- `application` tests should pass actor identity or ownership-relevant inputs through HTTP into the use case boundary instead of asserting ownership enforcement inside the controller.
+- `application` mappers may translate transport DTOs to use-case commands or results, but must not compute business state transitions, updated lines, pricing totals, or token balances.
 - `domain` should prefer use-case tests, domain models, ports, and typed business errors.
+- `domain` use cases own entity loading, ownership or authorization checks, workflow branching, and notification triggering through ports or collaborators.
 - `infrastructure` should prefer adapter, repository, mapping, or technical integration tests.
 
 ### Issue mutualization rule
@@ -154,6 +159,8 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 - You **MUST** confirm that at least one targeted test method actually executed before concluding `RED`.
 - You **MUST** return `BLOCKED` when the targeted selector matched no real tests or when the requested scenario is already covered by a passing real workspace test.
 - For application scenarios that mention HTTP requests, paths, methods, or status codes, you **MUST** create the failing test through a real HTTP-facing test surface rather than by calling a plain Java method directly.
+- For application scenarios, you **MUST** preserve the hexagonal flow `HTTP Controller -> HTTP Mapper -> Application Use Case -> Domain -> Repository Port -> Infrastructure`.
+- You **MUST NOT** normalize a controller that injects or calls business repositories or ports, loads entities, inspects domain state for business branching, or triggers notifications directly.
 - You **MUST** include a handoff-ready structured summary for Green with the exact fields `description`, `test_file_path`, and `test_method_name`.
 - When `status` is `BLOCKED`, you **MUST** set `description`, `test_file_path`, and `test_method_name` to `null`.
 - You **MUST** follow the testing instructions for the requested layer:
@@ -395,4 +402,3 @@ Return a single valid JSON object with this shape:
 }
 ```
 <!--Je n'ai pas au besoin de completer et de stabiliser les agents, car je l'avais déjà dans le prompt pour avoir quelque chose de solide, qui resiste à pas mal de cas -->
-

@@ -105,12 +105,17 @@ Examples:
 - You **MUST** follow the testing instructions for the requested layer.
 - For application API slices, you **MUST** note whether Refactor will need route declarations, controller annotations or handler metadata, and minimum web framework wiring for the selected scenarios.
 - For application API slices, you **MUST** keep business authorization, ownership, workflow, business decisions, aggregate mutation, and repository usage out of the controller seam and in the use-case or domain seam.
+- For application API slices, you **MUST** keep the seam shaped as `controller -> application use case`; the controller seam must not inject or call business repositories or ports directly.
+- For application API slices, you **MUST NOT** make the controller seam load entities, inspect domain state for workflow branching, or trigger notifications directly.
+- For application API slices, you **MUST** pass actor identity and ownership-relevant inputs into the use-case command or call rather than enforcing ownership in the controller seam.
+- For application API slices, you **MUST** keep entity loading, ownership or authorization checks, workflow branching, and notification triggering inside the application use case or domain seam.
 - For infrastructure repository slices, you **MUST** note whether the required domain port or interface already exists or must be extracted as a pure-domain contract during Refactor.
 - For infrastructure persistence slices, you **MUST** note whether Refactor will need separate JPA persistence entities, a dedicated mapper, and JPA wiring for the selected scenarios.
 
 ## Layer guard rails
 - `application`: keep an HTTP-controller-to-domain seam inside test code. For API or endpoint scenarios, exercise a real route or web test surface and preserve HTTP method, path, status, and body behavior. Do not embed domain business rules in the temporary controller.
 - `application`: before adding temporary implementation, verify the controller seam stays transport-only. Limit it to HTTP input reading, basic HTTP validation, DTO -> command mapping, use-case invocation, and HTTP response mapping. Do not load business entities or call business repositories from the controller seam.
+- `application`: keep HTTP mappers limited to transport-to-use-case translation. Do not compute business state transitions, updated lines, pricing totals, or token balances in a controller helper or mapper.
 - `domain`: keep a use-case-to-port seam inside the test code. Do not create concrete infrastructure implementations.
 - `domain`: keep business orchestration, repository usage through ports, authorization or ownership rules, workflow, and domain services inside the use case or domain seam. Do not introduce HTTP concepts, API DTOs, `ResponseEntity`, or status codes.
 - `infrastructure`: keep the implementation aligned with the existing domain port contract. Do not move business validation rules into the repository.

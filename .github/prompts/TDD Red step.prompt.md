@@ -65,8 +65,13 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 - `application` should prefer controller-entrypoint tests, transport DTO vocabulary, and real HTTP-facing test harnesses when scenarios mention requests, routes, status codes, or response bodies.
 - `application` controllers are transport-only seams: they may read HTTP inputs, apply basic HTTP validation, map DTO -> command, call a use case, and map result or exception to HTTP response.
 - `application` tests must not normalize controllers that load business entities, call business repositories, enforce business rules, ownership or authorization logic, workflow logic, aggregate mutation, or business decisions.
+- `application` tests must keep the target shape as `controller -> application use case`; they must not normalize a controller that injects or calls business repositories or ports directly.
+- `application` tests must not normalize a controller that loads entities, inspects domain state to decide workflow branches, or triggers notifications directly.
+- `application` tests should pass actor identity or ownership-relevant inputs through HTTP into the use case boundary instead of asserting ownership enforcement inside the controller.
+- `application` mappers may translate transport DTOs to use-case commands or results, but must not compute business state transitions, updated lines, pricing totals, or token balances.
 - `domain` should prefer use-case tests, domain models, ports, and typed business errors.
 - `domain` use cases own business orchestration, repository usage through ports, business rules, ownership and permissions, workflow, domain services, and explicit business results or exceptions.
+- `domain` use cases also own entity loading, ownership or authorization checks, workflow branching, and notification triggering through ports or collaborators.
 - `domain` use cases must stay ignorant of HTTP, Spring MVC, `ResponseEntity`, API DTOs, and HTTP status codes.
 - `infrastructure` should prefer adapter, repository, mapping, or technical integration tests.
 
@@ -152,6 +157,8 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 - For application scenarios that mention HTTP requests, paths, methods, or status codes, you **MUST** create the failing test through a real HTTP-facing test surface rather than by calling a plain Java method directly.
 - For application scenarios, you **MUST** preserve the hexagonal flow `HTTP Controller -> HTTP Mapper -> Application Use Case -> Domain -> Repository Port -> Infrastructure`.
 - You **MUST NOT** make a controller test depend on direct business repository access or business authorization, ownership, workflow, or mutation logic inside the controller.
+- For application scenarios, you **MUST NOT** normalize a controller that injects or calls business repositories or ports, loads entities, inspects domain state for business branching, or triggers notifications directly.
+- For application scenarios, you **MUST** keep actor identity and ownership-relevant inputs flowing into the use case boundary rather than enforcing ownership in the controller.
 - You **MUST** follow the testing instructions for the requested layer:
   - `docs/agents/instructions/application-testing.instructions.md`
   - `docs/agents/instructions/domain-testing.instructions.md`

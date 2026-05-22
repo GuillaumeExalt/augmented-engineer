@@ -7,6 +7,12 @@
 - Keep controllers extremely thin and limited to transport concerns: HTTP input reading, basic HTTP validation, DTO -> command mapping, use-case invocation, and HTTP response mapping only.
 - Do not let controller tests normalize forbidden controller behavior such as entity loading, direct business repository calls, business rules, ownership or authorization logic, workflow logic, aggregate mutation, or business decisions.
 - Keep business authorization, ownership, workflow, and repository usage in use cases or domain code, not in controllers.
+- For application API slices, shape the production seam as `HTTP controller -> application use case`; do not shape it as `controller -> repository/port/domain entity`.
+- Controller tests must not normalize a controller that injects or calls business repositories, loads entities, inspects domain state to branch business behavior, or triggers workflow decisions or notifications directly.
+- When ownership or actor identity matters, pass that identity and ownership-relevant inputs into the use case command or call; do not enforce ownership in the controller.
+- Keep application use cases responsible for entity loading, ownership or authorization checks, workflow branching, and notification triggering through domain ports or collaborators.
+- HTTP mappers may translate transport DTOs to use-case commands or results, but must not compute business state transitions, updated order lines, pricing totals, or token balances.
+- When refactoring an application API slice, move production-worthy orchestration into an `application/usecase` package or equivalent use case class, not into the controller or mapper.
 - Validate route declaration and HTTP method binding when the scenario documents a concrete endpoint such as `POST /commandes`.
 - Validate HTTP status codes, request/response body shapes, and input validation errors.
 - Test names should reflect endpoint and expected outcome: `shouldReturn404WhenUserNotFound`.
