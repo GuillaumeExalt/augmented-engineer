@@ -104,12 +104,15 @@ Examples:
 - You **MUST** prefer the existing business concept and existing test class when present.
 - You **MUST** follow the testing instructions for the requested layer.
 - For application API slices, you **MUST** note whether Refactor will need route declarations, controller annotations or handler metadata, and minimum web framework wiring for the selected scenarios.
+- For application API slices, you **MUST** keep business authorization, ownership, workflow, business decisions, aggregate mutation, and repository usage out of the controller seam and in the use-case or domain seam.
 - For infrastructure repository slices, you **MUST** note whether the required domain port or interface already exists or must be extracted as a pure-domain contract during Refactor.
 - For infrastructure persistence slices, you **MUST** note whether Refactor will need separate JPA persistence entities, a dedicated mapper, and JPA wiring for the selected scenarios.
 
 ## Layer guard rails
 - `application`: keep an HTTP-controller-to-domain seam inside test code. For API or endpoint scenarios, exercise a real route or web test surface and preserve HTTP method, path, status, and body behavior. Do not embed domain business rules in the temporary controller.
+- `application`: before adding temporary implementation, verify the controller seam stays transport-only. Limit it to HTTP input reading, basic HTTP validation, DTO -> command mapping, use-case invocation, and HTTP response mapping. Do not load business entities or call business repositories from the controller seam.
 - `domain`: keep a use-case-to-port seam inside the test code. Do not create concrete infrastructure implementations.
+- `domain`: keep business orchestration, repository usage through ports, authorization or ownership rules, workflow, and domain services inside the use case or domain seam. Do not introduce HTTP concepts, API DTOs, `ResponseEntity`, or status codes.
 - `infrastructure`: keep the implementation aligned with the existing domain port contract. Do not move business validation rules into the repository.
   - Shape the temporary seam like a future concrete JPA repository or adapter when the selected scenarios are about persistence, retrieval, update, or query behavior.
   - Keep domain and persistence concerns separate in the temporary test code when distinct JPA persistence entities or technical models will be needed later.

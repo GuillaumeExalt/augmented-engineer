@@ -60,7 +60,10 @@ The consumed Green JSON must contain at least:
   - move request DTOs under `model/in`
   - move response DTOs under `model/out`
   - move request-to-domain and domain-to-response translation under `mapper` when DTOs and domain models are distinct or the mapping is more than trivial field passthrough
+  - before promoting code, verify no business logic or repository access lives in the controller; if found, move it toward the use case or domain instead of preserving it in transport code
   - keep the controller focused on transport concerns and delegation, not non-trivial object mapping logic
+  - controllers may only read HTTP inputs, perform basic HTTP validation, map DTO -> command, call a use case, and map result or exception to HTTP response
+  - controllers must not load business entities, call business repositories, contain business rules, ownership or authorization logic, workflow logic, aggregate mutation, or business decisions
   - add the minimum web framework and test wiring required by the selected scenarios when no real HTTP surface exists yet and that wiring stays within the slice
   - do not create domain or infrastructure production code here
 - `domain`:
@@ -68,6 +71,8 @@ The consumed Green JSON must contain at least:
   - move domain models, commands, results, enums, and typed business exceptions under `model`
   - move repository interfaces under `port/out`
   - when supporting an infrastructure repository refactor, add only the pure domain repository port and domain-side query/result/value types strictly required by the selected scenarios
+  - use cases must orchestrate business behavior, load entities via ports or repositories, enforce business rules, ownership and permissions, execute workflow, call domain services, and return explicit business results or exceptions
+  - use cases must not know HTTP, Spring MVC, `ResponseEntity`, API DTOs, or HTTP status codes
   - do not create concrete infrastructure implementations here
 - `infrastructure`:
   - move concrete adapters and repositories under `repository`
@@ -87,6 +92,7 @@ The consumed Green JSON must contain at least:
 - For those scenarios, `REFACTORED` means explicit route declaration or handler metadata for the documented HTTP method and path, plus real request/response binding for the selected slice.
 - If the project currently lacks a web framework for the selected application slice, add only the minimum web framework and controller-test wiring needed for the selected scenarios; otherwise return `BLOCKED` rather than shipping a fake controller.
 - Keep transport concerns in the controller and move non-trivial DTO-to-domain or domain-to-response mapping into a dedicated mapper when needed.
+- Keep business authorization and ownership rules in the use case or domain, never in the controller.
 - Do not declare `REFACTORED` for an application API slice if tests still prove behavior only by calling a plain Java method directly.
 
 ## Infrastructure persistence slice rule
@@ -141,6 +147,8 @@ The consumed Green JSON must contain at least:
 - You **MUST** extract dedicated mapper code in the owning layer when the selected slice translates between distinct application, domain, or persistence models with non-trivial mapping.
 - You **MUST** promote application API slices to a real framework-backed controller or handler with explicit route metadata for the documented HTTP method and path.
 - You **MUST** add the minimum web framework and test wiring required by the selected application scenarios when no real HTTP surface exists yet and that work stays within the slice.
+- You **MUST** keep the application flow aligned with `HTTP Controller -> HTTP Mapper -> Application Use Case -> Domain -> Repository Port -> Infrastructure`.
+- You **MUST** keep business authorization, ownership, workflow, aggregate mutation, and repository usage out of controllers.
 - You **MUST** extract the minimum pure-domain repository port or interface first when an infrastructure repository slice needs it, and you **MUST** return `BLOCKED` if that prerequisite would exceed the selected scenario slice.
 - You **MUST** validate affected `domain`, `infrastructure`, and `application` tests when an infrastructure repository slice creates or changes shared production code.
 - You **MUST** choose JPA as the persistence technology for infrastructure persistence slices promoted during this prompt.

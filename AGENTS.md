@@ -56,6 +56,9 @@ The project follows a Hexagonal Architecture (Ports and Adapters), organized int
   - Depends on the Domain Module to perform business operations and call the Use Cases.
   - Depends on the Infrastructure Module for technical implementations (persistence, external services).
   - Handles input validation, request mapping, and response formatting, API Contract exposition (OpenAPI, AsyncAPI)
+  - HTTP controllers must stay extremely thin and limited to transport concerns.
+  - Controllers may only read HTTP inputs, perform basic HTTP validation, map DTO -> command, call a use case, and map result or exception to the HTTP response.
+  - Controllers must never load business entities, call business repositories, contain business rules, ownership or authorization logic, workflow logic, aggregate mutation, or business decisions.
 
 - **Domain Module** (`belair-buvette-domain`), located in {repository_root}/domain/ : the hexagon core, containing the Domain Entities, Value Objects, Domain Services, Ports definitions, and Use Cases implementations.
     - Independent of other modules, focusing solely on business logic and rules.
@@ -63,11 +66,20 @@ The project follows a Hexagonal Architecture (Ports and Adapters), organized int
     - Any domain use case that needs to load, persist, publish, or otherwise access external state must declare and use domain ports instead of assuming the caller will persist later.
     - Returning a domain result object is allowed, but it must not replace a required persistence or external interaction through a port.
     - Use Cases and their related Commands/Query are used as Primary Adapters to expose business operations to the Application Module.
+    - Use cases must orchestrate business behavior, load entities via ports or repositories, enforce business rules, ownership and permissions, execute workflow, call domain services, and return explicit business results or exceptions.
+    - Use cases must not know HTTP, Spring MVC, `ResponseEntity`, API DTOs, or HTTP status codes.
+    - Business authorization and ownership rules must always live in the use case or domain model, never in controllers.
 - **Infrastructure Module** (`belair-buvette-infrastructure`), located in {repository_root}/infrastructure/ : containing the technical implementations of the Ports defined in the Domain Module.
   - Depends on the Domain Module to implement the defined Ports.
   - Implements persistence (repositories), external service integrations, and other technical concerns.
   - Database access must be implemented in infrastructure adapters that implement the domain ports; the domain must never depend directly on JPA, SQL, or infrastructure classes.
   - Handles database interactions, external API calls, and other infrastructure-related tasks.
+
+## Hexagonal flow guard rails
+
+- Target flow: `HTTP Controller -> HTTP Mapper -> Application Use Case -> Domain -> Repository Port -> Infrastructure`.
+- Business repositories must be used from use cases, never from controllers.
+- Before modifying code, verify that no controller currently contains business logic or repository access; if it does, plan to move that behavior toward the use case or domain instead of reinforcing it in the controller.
 
   ## Repository Structure
 

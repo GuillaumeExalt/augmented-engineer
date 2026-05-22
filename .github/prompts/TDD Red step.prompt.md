@@ -63,7 +63,11 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 ### Layer rule
 - Only the requested `couche` may receive new or updated tests during this prompt.
 - `application` should prefer controller-entrypoint tests, transport DTO vocabulary, and real HTTP-facing test harnesses when scenarios mention requests, routes, status codes, or response bodies.
+- `application` controllers are transport-only seams: they may read HTTP inputs, apply basic HTTP validation, map DTO -> command, call a use case, and map result or exception to HTTP response.
+- `application` tests must not normalize controllers that load business entities, call business repositories, enforce business rules, ownership or authorization logic, workflow logic, aggregate mutation, or business decisions.
 - `domain` should prefer use-case tests, domain models, ports, and typed business errors.
+- `domain` use cases own business orchestration, repository usage through ports, business rules, ownership and permissions, workflow, domain services, and explicit business results or exceptions.
+- `domain` use cases must stay ignorant of HTTP, Spring MVC, `ResponseEntity`, API DTOs, and HTTP status codes.
 - `infrastructure` should prefer adapter, repository, mapping, or technical integration tests.
 
 ### Issue mutualization rule
@@ -115,16 +119,17 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 5. Locate the target test class for the requested layer.
   - Verify that the file really exists in the workspace before treating it as an existing class.
   - If the scenario was reused, verify that the exact matching `ScenarioN` test method really exists in the workspace before treating the scenario as already covered.
-6. Create or extend only the failing tests for the requested scenarios in that layer.
+6. Before modifying tests or production code assumptions for `application`, verify that the targeted controller behavior does not already contain business logic or direct repository access; if it does, keep the test aligned with a future extraction toward a use case or domain rule instead of reinforcing that controller design.
+7. Create or extend only the failing tests for the requested scenarios in that layer.
   - Translate the scenario steps into concrete inputs, one action, and explicit observable assertions.
   - Keep the test focused on the documented business behavior for that scenario.
   - If a seam is missing, add only the minimum requested-layer test-local seam required to express the scenario without touching production code.
-7. Run the narrowest requested-layer validation to confirm the new tests fail.
+8. Run the narrowest requested-layer validation to confirm the new tests fail.
   - Target the exact class or exact test method whenever possible.
   - Verify that at least one matching test method actually executed.
   - If the targeted scenario is already covered by a real workspace test and that test passes, stop and return `BLOCKED`.
   - If the selector produced no proof that the target test ran, stop and return `BLOCKED`.
-8. Return only valid JSON.
+9. Return only valid JSON.
 
 ## Requirements
 - You **MUST** work on one layer only.
@@ -145,6 +150,8 @@ Scenario: Requete refusee si le festivalier n'est pas authentifie
 - You **MUST** confirm that at least one targeted test method actually executed before concluding `RED`.
 - You **MUST** return `BLOCKED` when the targeted selector matched no real tests or when the requested scenario is already covered by a passing real workspace test.
 - For application scenarios that mention HTTP requests, paths, methods, or status codes, you **MUST** create the failing test through a real HTTP-facing test surface rather than by calling a plain Java method directly.
+- For application scenarios, you **MUST** preserve the hexagonal flow `HTTP Controller -> HTTP Mapper -> Application Use Case -> Domain -> Repository Port -> Infrastructure`.
+- You **MUST NOT** make a controller test depend on direct business repository access or business authorization, ownership, workflow, or mutation logic inside the controller.
 - You **MUST** follow the testing instructions for the requested layer:
   - `docs/agents/instructions/application-testing.instructions.md`
   - `docs/agents/instructions/domain-testing.instructions.md`
