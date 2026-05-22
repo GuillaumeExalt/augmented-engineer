@@ -7,19 +7,19 @@ Un festivalier dispose de deux types de jetons : jetons boisson et jetons nourri
 
 Feature: Consult token balance
 
-Scenario: Consult balance of a festivalier
+Scenario: 3 - Consult balance of a festivalier
 Given a festivalier with 7 food tokens and 4 drink tokens
 When consulting the token balance
 Then receive 7 for food tokens
 And receive 4 for drink tokens
 
-Scenario: Consult initial balance
+Scenario: 1 - Consult initial balance
 Given a new festivalier
 When consulting the token balance
 Then receive 0 for food tokens
 And receive 0 for drink tokens
 
-Scenario: Consult balance after daily allocation
+Scenario: 2 - Consult balance after daily allocation
 Given a festivalier with 0 food tokens and 0 drink tokens
 When daily tokens are allocated
 And consulting the token balance

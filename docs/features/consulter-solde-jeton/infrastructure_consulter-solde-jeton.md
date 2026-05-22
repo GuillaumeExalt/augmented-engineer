@@ -7,19 +7,20 @@ Un festivalier dispose de deux types de jetons : jetons boisson et jetons nourri
 
 Feature: Infrastructure - Festivalier balance retrieval
 
-Scenario: Retrieve festivalier balance successfully
+Scenario: 3 - Retrieve festivalier balance successfully
 Given a festivalier exists in the system with 7 food tokens and 4 drink tokens
-When retrieving the festivalier by ID
-Then the infrastructure returns the festivalier with correct balances
+When retrieving the festivalier balance by ID
+Then the infrastructure returns 7 for food tokens
+And the infrastructure returns 4 for drink tokens
 
-Scenario: Festivalier not found
+Scenario: 6 - Festivalier not found
 Given a festivalier does not exist in the system
-When retrieving the festivalier by ID
+When retrieving the festivalier balance by ID
 Then the infrastructure returns a not found error
 
-Scenario: System error during retrieval
+Scenario: 7 - System error during retrieval
 Given the storage system is unavailable
-When retrieving the festivalier by ID
+When retrieving the festivalier balance by ID
 Then the infrastructure returns a system error
 
 **Notes**
