@@ -7,31 +7,25 @@ Un festivalier dispose de deux types de jetons : jetons boisson et jetons nourri
 
 Feature: Festivalier tokens
 
-Scenario: 1 - Initial balance
+Scenario: Initial balance
 Given a new festivalier
 When the festivalier is created
 Then food token balance is 0
 And drink token balance is 0
 
-Scenario: 2 - Daily token allocation
+Scenario: Daily token allocation
 Given a festivalier with 0 food tokens and 0 drink tokens
 When daily tokens are allocated
 Then food token balance becomes 9
 And drink token balance becomes 6
 
-Scenario: 3 - Consult current balance of a festivalier
-Given a festivalier with 7 food tokens and 4 drink tokens
-When consulting the token balance
-Then receive 7 for food tokens
-And receive 4 for drink tokens
-
-Scenario: 4 - Tokens not carried over
+Scenario: Tokens not carried over
 Given a festivalier with 5 food tokens and 3 drink tokens
 When daily tokens are allocated
 Then food token balance becomes 9
 And drink token balance becomes 6
 
-Scenario: 5 - Non-negative balance
+Scenario: Non-negative balance
 Given a festivalier
 When attempting to set negative food tokens
 Then an error is thrown
