@@ -111,6 +111,10 @@ Examples:
 - For application API slices, you **MUST** keep entity loading, ownership or authorization checks, workflow branching, and notification triggering inside the application use case or domain seam.
 - For infrastructure repository slices, you **MUST** note whether the required domain port or interface already exists or must be extracted as a pure-domain contract during Refactor.
 - For infrastructure persistence slices, you **MUST** note whether Refactor will need separate JPA persistence entities, a dedicated mapper, and JPA wiring for the selected scenarios.
+- You **MUST** include a handoff-ready structured summary for Refactor with the exact fields `test_file_path`, `test_method_name`, and `implemented_code`.
+- You **MUST** populate `implemented_code` only with class, enum, or interface symbols implemented in the target test class to make selected tests pass.
+- When `status` is `GREEN`, you **MUST** set `test_file_path` and `test_method_name` to concrete values tied to a selected passing scenario test.
+- When `status` is `PARTIAL` or `BLOCKED`, you **MUST** set `test_file_path` and `test_method_name` to `null`, and `implemented_code` to `[]`.
 
 ## Layer guard rails
 - `application`: keep an HTTP-controller-to-domain seam inside test code. For API or endpoint scenarios, exercise a real route or web test surface and preserve HTTP method, path, status, and body behavior. Do not embed domain business rules in the temporary controller.
@@ -135,6 +139,9 @@ Examples:
 - Do not make an application API or endpoint scenario green by directly invoking a plain Java method that has no real route or handler semantics.
 - Do not hide a missing domain repository contract behind a temporary infrastructure seam without reporting whether Refactor must extract a minimal pure-domain port.
 - Do not let the temporary infrastructure seam imply JDBC or another persistence technology when the slice will be promoted as a real persistence implementation during Refactor; the target technology is JPA.
+- Do not return `GREEN` if at least one selected scenario test is not `PASSED`.
+- Do not set handoff fields to non-null values when `status` is `PARTIAL` or `BLOCKED`.
+- Do not include methods, variables, or production symbols in `implemented_code`; include only class, enum, or interface names implemented inside the test class.
 
 ## JSON output contract
 
@@ -168,9 +175,19 @@ Return a single valid JSON object with this shape:
       "<testMethodName>": "PASSED | FAILED | NOT_RUN"
     }
   },
-  "notes": ["string"]
+  "notes": ["string"],
+  "test_file_path": "string | null",
+  "test_method_name": "string | null",
+  "implemented_code": ["string"]
 }
 ```
+
+### Handoff semantics
+- `test_file_path`: path to the test file that should be used as the starting point for Refactor.
+- `test_method_name`: one selected scenario test method that is now green and can drive Refactor first.
+- `implemented_code`: list of class, enum, or interface symbols implemented in the test class to make selected tests pass.
+- If several selected methods passed, choose one primary method for `test_method_name` and keep the others in `selectedTestMethods`.
+- If `status` is `PARTIAL` or `BLOCKED`, return `test_file_path = null`, `test_method_name = null`, and `implemented_code = []`.
 
 ## Example output
 ```json
@@ -213,6 +230,11 @@ Return a single valid JSON object with this shape:
   "notes": [
     "Only the requested application scenarios were implemented.",
     "No production code was modified."
+  ],
+  "test_file_path": "application/src/test/java/com/example/application/order/PlaceDrinkOrderControllerTest.java",
+  "test_method_name": "shouldReturnUnauthorizedWhenSubmittingAvailableDrinkOrderWithoutFestivalGoerIdentifierScenario5",
+  "implemented_code": [
+    "RecordingPlaceDrinkOrderUseCase"
   ]
 }
 ```

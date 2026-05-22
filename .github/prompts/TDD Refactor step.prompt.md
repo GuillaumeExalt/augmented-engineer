@@ -94,7 +94,7 @@ The consumed Green JSON must contain at least:
 ## Application API slice rule
 - When the selected application scenarios express HTTP or API behavior, the default refactor target is a concrete framework-backed controller or handler under `src/main`, not a plain Java object invoked directly by tests.
 - For those scenarios, `REFACTORED` means explicit route declaration or handler metadata for the documented HTTP method and path, plus real request/response binding for the selected slice.
-- If the project currently lacks a web framework for the selected application slice, add only the minimum web framework and controller-test wiring needed for the selected scenarios; otherwise return `BLOCKED` rather than shipping a fake controller.
+- When the module already has a web framework dependency (e.g., Spring WebMVC is already declared), proceed directly to create the real framework-backed controller under `src/main`; no additional framework setup is needed. When the module currently lacks any web framework dependency, add only the minimum framework and test wiring needed for the selected scenarios; return `BLOCKED` if that setup would exceed the selected scenario slice or require cross-module changes.
 - Keep transport concerns in the controller and move non-trivial DTO-to-domain or domain-to-response mapping into a dedicated mapper when needed.
 - Keep business authorization and ownership rules in the use case or domain, never in the controller.
 - Keep entity loading, ownership or authorization checks, workflow branching, and notification triggering in the application use case or domain, never in the controller or mapper.
@@ -116,7 +116,11 @@ The consumed Green JSON must contain at least:
 ## Instructions
 1. Parse the provided Green JSON.
 2. Confirm that it is a single-layer Green result.
-3. Read the selected target test file and only the symbols introduced for that slice.
+3. Resolve the execution anchor from Green:
+   - Prefer `test_file_path` and `test_method_name` when present and valid.
+   - Fall back to `targetClass.testFilePath` and `selectedTestMethods` otherwise.
+   - Use `implemented_code` from Green as the explicit list of symbols to consider for production promotion when present.
+4. Read the selected target test file and only the symbols introduced for that slice.
 4. For `application`, also resolve the closest matching HTTP or web wiring surface already present in the module before deciding what is production-worthy.
   - If the selected scenarios assert HTTP method, route, status, headers, or body behavior, determine whether the minimum real web framework setup needed for those scenarios stays within the slice. If not, return `BLOCKED`.
 5. For `infrastructure`, also resolve the closest matching domain port or interface, the nearest existing infrastructure wiring surface, and the currently available JPA surface before deciding what is production-worthy.
@@ -168,6 +172,10 @@ The consumed Green JSON must contain at least:
 - You **MUST NOT** add new scenarios.
 - You **MUST NOT** widen the refactor to another layer.
 - You **MUST NOT** create cross-layer production code just because it would be convenient.
+- You **MUST** include a structured final summary with `test_file_path`, `test_method_name`, and `refactored_code`.
+- You **MUST** include in `refactored_code` only class, enum, or interface symbols that are production symbols created or moved in this Refactor step.
+- When `status` is `REFACTORED`, you **MUST** set `test_file_path` and `test_method_name` to concrete values that were validated as passing.
+- When `status` is `BLOCKED`, you **MUST** set `test_file_path` and `test_method_name` to `null`, and `refactored_code` to `[]`.
 
 ## Hard stops
 - Do not refactor the whole feature if Green only targeted one scenario slice.
@@ -239,9 +247,19 @@ Return a single valid JSON object with this shape:
       "<testMethodName>": "PASSED | FAILED | NOT_RUN"
     }
   },
-  "notes": ["string"]
+  "notes": ["string"],
+  "test_file_path": "string | null",
+  "test_method_name": "string | null",
+  "refactored_code": ["string"]
 }
 ```
+
+### Structured summary semantics
+- `test_file_path`: validated test file used as execution anchor for this Refactor step.
+- `test_method_name`: one validated passing test method that proves behavior is preserved for the selected slice.
+- `refactored_code`: class, enum, or interface symbols created or moved in production code during this step.
+- If multiple test methods passed, choose one primary method for `test_method_name` and keep all in `selectedTestMethods`.
+- If `status` is `BLOCKED`, return `test_file_path = null`, `test_method_name = null`, and `refactored_code = []`.
 
 ## Example output
 ```json
@@ -301,6 +319,13 @@ Return a single valid JSON object with this shape:
   "notes": [
     "The refactor stayed inside the application layer.",
     "Behavior remained unchanged for the selected scenario slice."
+  ],
+  "test_file_path": "application/src/test/java/com/example/application/order/PlaceDrinkOrderControllerTest.java",
+  "test_method_name": "shouldReturnPendingOrderIdentifierWhenSubmittingAvailableDrinkOrderScenario4",
+  "refactored_code": [
+    "PlaceDrinkOrderController",
+    "CreateDrinkOrderRequest",
+    "CreateDrinkOrderResponse"
   ]
 }
 ```

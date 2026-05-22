@@ -98,7 +98,7 @@ Optional Green handoff hints:
 ## Application API slice rule
 - When the selected application scenarios express HTTP or API behavior, the default refactor target is a concrete framework-backed controller or handler under `src/main`, not a plain Java object invoked directly by tests.
 - For those scenarios, `REFACTORED` means explicit route declaration or handler metadata for the documented HTTP method and path, plus real request/response binding for the selected slice.
-- If the project currently lacks a web framework for the selected application slice, add only the minimum web framework and controller-test wiring needed for the selected scenarios; otherwise return `BLOCKED` rather than shipping a fake controller.
+- When the module already has a web framework dependency (e.g., Spring WebMVC is already declared), proceed directly to create the real framework-backed controller under `src/main`; no additional framework setup is needed. When the module currently lacks any web framework dependency, add only the minimum framework and test wiring needed for the selected scenarios; return `BLOCKED` if that setup would exceed the selected scenario slice or require cross-module changes.
 - Keep transport concerns in the controller and move non-trivial DTO-to-domain or domain-to-response mapping into a dedicated mapper when needed.
 - Keep entity loading, ownership or authorization checks, workflow branching, and notification triggering in the application use case or domain, never in the controller or mapper.
 - Do not declare `REFACTORED` for an application API slice if tests still prove behavior only by calling a plain Java method directly.
