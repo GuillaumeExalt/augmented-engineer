@@ -31,7 +31,15 @@ public final class JpaDrinkOrderRepository implements DrinkOrderRepository {
     @Override
     public void save(DrinkOrder order) {
         executeInTransaction(entityManager -> {
-            entityManager.persist(mapper.toEntity(order));
+            DrinkOrderEntity existingOrder = entityManager.find(DrinkOrderEntity.class, order.orderId());
+            if (existingOrder == null) {
+                entityManager.persist(mapper.toEntity(order));
+                return null;
+            }
+
+            DrinkOrderEntity mappedOrder = mapper.toEntity(order);
+            existingOrder.updateStatus(mappedOrder.getStatus());
+            existingOrder.replaceLines(mappedOrder.getLines());
             return null;
         });
     }
