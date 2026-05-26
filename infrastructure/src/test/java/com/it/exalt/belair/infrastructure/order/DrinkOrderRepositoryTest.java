@@ -98,7 +98,7 @@ class DrinkOrderRepositoryTest {
     }
 
     @Test
-    void shouldRollbackPendingChangeRequestPersistenceWhenNotificationPublicationFailsScenario3() {
+    void shouldPersistPendingChangeRequestWhenNotificationPublicationFailsScenario3() {
         try (RepositoryTestContext context = modificationRepositoryUnderTest()) {
             DrinkOrderRepository repository = context.repository();
             repository.save(new DrinkOrder(
@@ -120,7 +120,7 @@ class DrinkOrderRepositoryTest {
             assertAll(
                     () -> assertEquals(IllegalStateException.class, thrown == null ? null : thrown.getClass()),
                     () -> assertTrue((thrown == null ? "" : thrown.getMessage()).contains("notification publication failed")),
-                    () -> assertEquals(0L, countRows(context.entityManagerFactory(), "drink_order_change_requests"))
+                    () -> assertEquals(1L, countRows(context.entityManagerFactory(), "drink_order_change_requests"))
             );
         }
     }

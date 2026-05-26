@@ -41,9 +41,9 @@ public final class JpaDrinkOrderChangeRequestRepository implements DrinkOrderCha
     public void save(DrinkOrderChangeRequest changeRequest) {
         executeInTransaction(entityManager -> {
             entityManager.persist(mapper.toPendingEntity(changeRequest));
-            notificationPublisher.accept(changeRequest);
             return null;
         });
+        notificationPublisher.accept(changeRequest);
     }
 
     private <T> T executeInTransaction(Function<EntityManager, T> work) {
