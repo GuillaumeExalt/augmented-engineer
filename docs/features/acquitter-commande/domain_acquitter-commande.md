@@ -1,5 +1,7 @@
 # Acquitter une commande et fournir un temps estime - Domaine
 
+<!-- github-issue: GuillaumeExalt/augmented-engineer#2 -->
+
 **Contexte**
 Le domaine doit permettre au barman d'acquitter une commande, de calculer le temps estime de preparation selon les regles metier, puis de basculer la commande en preparation.
 

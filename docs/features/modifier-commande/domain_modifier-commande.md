@@ -1,5 +1,7 @@
 # Modifier une commande - Domaine
 
+<!-- github-issue: GuillaumeExalt/augmented-engineer#8 -->
+
 **Contexte**
 Le domaine doit autoriser la modification d'une commande uniquement tant qu'elle n'est pas acquittee, tout en revalidant le cout total de la commande modifiee contre les soldes de jetons du festivalier.
 

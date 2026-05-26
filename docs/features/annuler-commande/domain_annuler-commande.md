@@ -1,5 +1,7 @@
 # Annuler une commande - Domaine
 
+<!-- github-issue: GuillaumeExalt/augmented-engineer#5 -->
+
 **Contexte**
 Le domaine doit autoriser l'annulation d'une commande uniquement tant qu'elle n'est pas acquittee, puis rembourser les jetons utilises au solde du festivalier.
 

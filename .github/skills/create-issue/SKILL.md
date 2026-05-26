@@ -1,6 +1,6 @@
 ---
 name: create-issue
-description: Generate structured development issues in markdown files with title, context, acceptance criteria, and Gherkin scenarios from a functional request.
+description: Generate structured development issues in local markdown files with title, context, acceptance criteria, and Gherkin scenarios from a functional request.
 ---
 
 # Instructions
@@ -15,15 +15,18 @@ description: Generate structured development issues in markdown files with title
     3. Generate a concise, explicit title.
     4. Produce 1..N Gherkin scenarios covering the happy path and relevant edge cases.
     5. Create the issue file under `docs/features/{feature_name}/{module_name}_{issue_title}.md`.
-    6. Each features/{feature_name} directory should contain a domain_{feature_name}.md file that models the domain concepts and rules related to the feature.
-    7. Each features/{feature_name} directory should contain a application_{feature_name}.md file that models the domain concepts and rules related to the feature.
-    8. Each features/{feature_name} directory should contain a infrastructure_{feature_name}.md file that models the domain concepts and rules related to the feature.
-    9. The Text should be only in french
-    9. Use the `templates/issue.md` template format for the file.
-    10. Validate the created issue using `python scripts/validate_issue_format.py <issue_file>`.
+    6. If an issue file already exists, preserve any existing `<!-- github-issue: owner/repo#123 -->` sync marker comment.
+    7. Each features/{feature_name} directory should contain a domain_{feature_name}.md file that models the domain concepts and rules related to the feature.
+    8. Each features/{feature_name} directory should contain a application_{feature_name}.md file that models the domain concepts and rules related to the feature.
+    9. Each features/{feature_name} directory should contain a infrastructure_{feature_name}.md file that models the domain concepts and rules related to the feature.
+    10. The Text should be only in french
+    11. Use the `templates/issue.md` template format for the file.
+    12. Validate the created issue using `python scripts/validate_issue_format.py <issue_file>`.
 
 # Note
 
+- This skill creates local Markdown issue files only. It does not publish GitHub issues.
+- To publish or sync those files to a mirror repository via MCP, use the `GitHub Issue Sync` agent or prompt.
 - This skill is intended to create manageable, testable issues. Do not create a single issue that tries to cover multiple unrelated modules.
 - If the request is too broad or crosses many concerns, ask the user to break it down by module or feature.
 - Prefer one issue per impacted module when the feature spans domain, application, and infrastructure.

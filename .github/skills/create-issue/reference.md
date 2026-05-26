@@ -13,3 +13,8 @@ Each issue is a standalone Markdown file with the following sections:
 
 ## File naming convention
 Créez ce fichier dans votre dossier .github/skills/create-issue/, et vérifiez que l'agent l'exploite correctement lorsqu'il génère une issue avec plusieurs modules.
+
+## Publication GitHub
+
+Ce skill génère uniquement les fichiers d'issue locaux sous `docs/features/...`.
+Pour publier ou synchroniser ces issues vers un repository miroir GitHub via MCP, utilisez l'agent ou le prompt `GitHub Issue Sync`.

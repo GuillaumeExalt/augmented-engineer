@@ -1,5 +1,7 @@
 # Modifier une commande - Infrastructure
 
+<!-- github-issue: GuillaumeExalt/augmented-engineer#9 -->
+
 **Contexte**
 L'infrastructure doit persister de facon coherente soit la mise a jour directe de la commande non acquittee, soit la creation d'une demande de changement associee a une commande deja acquittee.
 

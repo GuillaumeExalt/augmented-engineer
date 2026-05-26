@@ -1,5 +1,7 @@
 # Annuler une commande - Infrastructure
 
+<!-- github-issue: GuillaumeExalt/augmented-engineer#6 -->
+
 **Contexte**
 L'infrastructure doit persister l'annulation de commande et le remboursement des jetons dans un traitement atomique, puis emettre la notification de confirmation au festivalier.
 

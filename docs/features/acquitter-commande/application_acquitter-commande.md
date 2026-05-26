@@ -1,5 +1,7 @@
 # Acquitter une commande et fournir un temps estime - Application
 
+<!-- github-issue: GuillaumeExalt/augmented-engineer#1 -->
+
 **Contexte**
 La couche application expose l'action d'acquittement pour le barman, retourne l'etat de preparation et l'ETA calcule, puis declenche la notification vers le festivalier.
 

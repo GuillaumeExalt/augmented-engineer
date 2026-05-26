@@ -1,5 +1,7 @@
 # Annuler une commande - Application
 
+<!-- github-issue: GuillaumeExalt/augmented-engineer#4 -->
+
 **Contexte**
 La couche application expose la demande d'annulation, applique les regles d'etat de commande et renvoie une confirmation explicite avec les montants rembourses lorsque l'annulation est autorisee.
 
