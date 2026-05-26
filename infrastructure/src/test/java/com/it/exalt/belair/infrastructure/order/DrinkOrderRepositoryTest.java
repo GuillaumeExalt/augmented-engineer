@@ -237,8 +237,6 @@ class DrinkOrderRepositoryTest {
         EntityManager entityManager = entityManagerFactory.createEntityManager();
         try {
             return ((Number) entityManager.createNativeQuery("select count(*) from " + tableName).getSingleResult()).longValue();
-        } catch (RuntimeException exception) {
-            return -1L;
         } finally {
             entityManager.close();
         }
@@ -253,8 +251,6 @@ class DrinkOrderRepositoryTest {
                     .setParameter(1, orderId)
                     .getSingleResult();
             return result == null ? null : result.toString();
-        } catch (RuntimeException exception) {
-            return null;
         } finally {
             entityManager.close();
         }
