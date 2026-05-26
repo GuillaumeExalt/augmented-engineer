@@ -215,11 +215,7 @@ class DrinkOrderRepositoryTest {
     }
 
     private static RepositoryTestContext modificationRepositoryUnderTest() {
-        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory(
-                "belair-drink-order-persistence",
-                Map.of("jakarta.persistence.jdbc.url", "jdbc:h2:mem:belair-drink-order-" + UUID.randomUUID() + ";DB_CLOSE_DELAY=-1")
-        );
-        return new RepositoryTestContext(new JpaDrinkOrderRepository(entityManagerFactory), entityManagerFactory);
+        return repositoryUnderTest();
     }
 
     private static DrinkOrderChangeRequestRepository changeRequestRepositoryUnderTest(
