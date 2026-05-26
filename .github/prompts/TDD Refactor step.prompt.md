@@ -60,7 +60,14 @@ The consumed Green JSON must contain at least:
   - move request DTOs under `model/in`
   - move response DTOs under `model/out`
   - move request-to-domain and domain-to-response translation under `mapper` when DTOs and domain models are distinct or the mapping is more than trivial field passthrough
+  - before promoting code, verify no business logic or repository access lives in the controller; if found, move it toward the use case or domain instead of preserving it in transport code
   - keep the controller focused on transport concerns and delegation, not non-trivial object mapping logic
+  - controllers may only read HTTP inputs, perform basic HTTP validation, map DTO -> command, call a use case, and map result or exception to HTTP response
+  - controllers must not load business entities, call business repositories, contain business rules, ownership or authorization logic, workflow logic, aggregate mutation, or business decisions
+  - controllers must not inject or call business repositories or ports directly, must not load entities or inspect domain state to branch business behavior, and must not trigger notifications directly
+  - pass actor identity and ownership-relevant inputs into the application use case instead of enforcing ownership in the controller
+  - move production-worthy orchestration under an `application/usecase` package or equivalent use case class, not into the controller or mapper
+  - keep HTTP mappers limited to DTO <-> use-case command/result translation; they must not compute business state transitions, updated lines, pricing totals, or token balances
   - add the minimum web framework and test wiring required by the selected scenarios when no real HTTP surface exists yet and that wiring stays within the slice
   - do not create domain or infrastructure production code here
 - `domain`:
@@ -68,6 +75,8 @@ The consumed Green JSON must contain at least:
   - move domain models, commands, results, enums, and typed business exceptions under `model`
   - move repository interfaces under `port/out`
   - when supporting an infrastructure repository refactor, add only the pure domain repository port and domain-side query/result/value types strictly required by the selected scenarios
+  - use cases must orchestrate business behavior, load entities via ports or repositories, enforce business rules, ownership and permissions, execute workflow, call domain services, and return explicit business results or exceptions
+  - use cases must not know HTTP, Spring MVC, `ResponseEntity`, API DTOs, or HTTP status codes
   - do not create concrete infrastructure implementations here
 - `infrastructure`:
   - move concrete adapters and repositories under `repository`
@@ -85,8 +94,10 @@ The consumed Green JSON must contain at least:
 ## Application API slice rule
 - When the selected application scenarios express HTTP or API behavior, the default refactor target is a concrete framework-backed controller or handler under `src/main`, not a plain Java object invoked directly by tests.
 - For those scenarios, `REFACTORED` means explicit route declaration or handler metadata for the documented HTTP method and path, plus real request/response binding for the selected slice.
-- If the project currently lacks a web framework for the selected application slice, add only the minimum web framework and controller-test wiring needed for the selected scenarios; otherwise return `BLOCKED` rather than shipping a fake controller.
+- When the module already has a web framework dependency (e.g., Spring WebMVC is already declared), proceed directly to create the real framework-backed controller under `src/main`; no additional framework setup is needed. When the module currently lacks any web framework dependency, add only the minimum framework and test wiring needed for the selected scenarios; return `BLOCKED` if that setup would exceed the selected scenario slice or require cross-module changes.
 - Keep transport concerns in the controller and move non-trivial DTO-to-domain or domain-to-response mapping into a dedicated mapper when needed.
+- Keep business authorization and ownership rules in the use case or domain, never in the controller.
+- Keep entity loading, ownership or authorization checks, workflow branching, and notification triggering in the application use case or domain, never in the controller or mapper.
 - Do not declare `REFACTORED` for an application API slice if tests still prove behavior only by calling a plain Java method directly.
 
 ## Infrastructure persistence slice rule
@@ -105,7 +116,11 @@ The consumed Green JSON must contain at least:
 ## Instructions
 1. Parse the provided Green JSON.
 2. Confirm that it is a single-layer Green result.
-3. Read the selected target test file and only the symbols introduced for that slice.
+3. Resolve the execution anchor from Green:
+   - Prefer `test_file_path` and `test_method_name` when present and valid.
+   - Fall back to `targetClass.testFilePath` and `selectedTestMethods` otherwise.
+   - Use `implemented_code` from Green as the explicit list of symbols to consider for production promotion when present.
+4. Read the selected target test file and only the symbols introduced for that slice.
 4. For `application`, also resolve the closest matching HTTP or web wiring surface already present in the module before deciding what is production-worthy.
   - If the selected scenarios assert HTTP method, route, status, headers, or body behavior, determine whether the minimum real web framework setup needed for those scenarios stays within the slice. If not, return `BLOCKED`.
 5. For `infrastructure`, also resolve the closest matching domain port or interface, the nearest existing infrastructure wiring surface, and the currently available JPA surface before deciding what is production-worthy.
@@ -141,6 +156,11 @@ The consumed Green JSON must contain at least:
 - You **MUST** extract dedicated mapper code in the owning layer when the selected slice translates between distinct application, domain, or persistence models with non-trivial mapping.
 - You **MUST** promote application API slices to a real framework-backed controller or handler with explicit route metadata for the documented HTTP method and path.
 - You **MUST** add the minimum web framework and test wiring required by the selected application scenarios when no real HTTP surface exists yet and that work stays within the slice.
+- You **MUST** keep the application flow aligned with `HTTP Controller -> HTTP Mapper -> Application Use Case -> Domain -> Repository Port -> Infrastructure`.
+- You **MUST** keep business authorization, ownership, workflow, aggregate mutation, and repository usage out of controllers.
+- You **MUST** keep controllers delegating to an application use case instead of injecting or calling business repositories or ports directly.
+- You **MUST** keep entity loading, ownership or authorization checks, workflow branching, and notification triggering in the application use case or domain.
+- You **MUST** keep HTTP mappers limited to DTO <-> use-case command/result translation, not business computations such as state transitions, updated lines, pricing totals, or token balances.
 - You **MUST** extract the minimum pure-domain repository port or interface first when an infrastructure repository slice needs it, and you **MUST** return `BLOCKED` if that prerequisite would exceed the selected scenario slice.
 - You **MUST** validate affected `domain`, `infrastructure`, and `application` tests when an infrastructure repository slice creates or changes shared production code.
 - You **MUST** choose JPA as the persistence technology for infrastructure persistence slices promoted during this prompt.
@@ -152,12 +172,17 @@ The consumed Green JSON must contain at least:
 - You **MUST NOT** add new scenarios.
 - You **MUST NOT** widen the refactor to another layer.
 - You **MUST NOT** create cross-layer production code just because it would be convenient.
+- You **MUST** include a structured final summary with `test_file_path`, `test_method_name`, and `refactored_code`.
+- You **MUST** include in `refactored_code` only class, enum, or interface symbols that are production symbols created or moved in this Refactor step.
+- When `status` is `REFACTORED`, you **MUST** set `test_file_path` and `test_method_name` to concrete values that were validated as passing.
+- When `status` is `BLOCKED`, you **MUST** set `test_file_path` and `test_method_name` to `null`, and `refactored_code` to `[]`.
 
 ## Hard stops
 - Do not refactor the whole feature if Green only targeted one scenario slice.
 - Do not create domain production classes from an application refactor slice.
 - Do not create infrastructure implementations from a domain refactor slice.
 - Do not move business validation rules into controllers.
+- Do not leave production-worthy orchestration in an application controller or mapper; move it into an application use case class or equivalent package.
 - Do not move technical persistence concerns into the domain.
 - Do not declare `REFACTORED` for an application API slice if the production controller remains a plain Java object called directly by tests.
 - Do not ship an application API slice without a real route or handler declaration for the documented method and path when the issue explicitly asserts HTTP behavior.
@@ -222,9 +247,19 @@ Return a single valid JSON object with this shape:
       "<testMethodName>": "PASSED | FAILED | NOT_RUN"
     }
   },
-  "notes": ["string"]
+  "notes": ["string"],
+  "test_file_path": "string | null",
+  "test_method_name": "string | null",
+  "refactored_code": ["string"]
 }
 ```
+
+### Structured summary semantics
+- `test_file_path`: validated test file used as execution anchor for this Refactor step.
+- `test_method_name`: one validated passing test method that proves behavior is preserved for the selected slice.
+- `refactored_code`: class, enum, or interface symbols created or moved in production code during this step.
+- If multiple test methods passed, choose one primary method for `test_method_name` and keep all in `selectedTestMethods`.
+- If `status` is `BLOCKED`, return `test_file_path = null`, `test_method_name = null`, and `refactored_code = []`.
 
 ## Example output
 ```json
@@ -284,6 +319,13 @@ Return a single valid JSON object with this shape:
   "notes": [
     "The refactor stayed inside the application layer.",
     "Behavior remained unchanged for the selected scenario slice."
+  ],
+  "test_file_path": "application/src/test/java/com/example/application/order/PlaceDrinkOrderControllerTest.java",
+  "test_method_name": "shouldReturnPendingOrderIdentifierWhenSubmittingAvailableDrinkOrderScenario4",
+  "refactored_code": [
+    "PlaceDrinkOrderController",
+    "CreateDrinkOrderRequest",
+    "CreateDrinkOrderResponse"
   ]
 }
 ```

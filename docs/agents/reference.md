@@ -33,6 +33,14 @@ Suivre l'Architecture Hexagonale comme décrit dans AGENTS.md.
 - **Entités** : Classes dans le domaine, e.g., `Order`, `FestivalGoer`
 - **DTOs** : Dans l'application, e.g., `OrderRequestDto`
 - **Contrôleurs** : Dans l'application, e.g., `OrderController`
+- **Flux cible** : `HTTP Controller -> HTTP Mapper -> Application Use Case -> Domain -> Repository Port -> Infrastructure`
+- **Contrôleurs HTTP** : restent extremement fins et limites aux concerns de transport. Ils peuvent seulement lire les entrees HTTP, faire une validation HTTP basique, mapper DTO -> commande, appeler un use case, puis mapper le resultat ou l'exception vers la reponse HTTP.
+- **Interdits dans les contrôleurs** : chargement d'entites metier, appels directs aux repositories metier, regles metier, logique d'autorisation ou d'ownership metier, logique de workflow, mutation d'aggregat, ou decisions metier.
+- **Use cases** : orchestrent le comportement metier, chargent les entites via ports ou repositories, appliquent les regles metier, l'ownership et les permissions, executent le workflow, appellent les services de domaine, et retournent des resultats ou exceptions metier explicites.
+- **Interdits dans les use cases** : dependances a HTTP, Spring MVC, `ResponseEntity`, DTOs d'API, ou codes de statut HTTP.
+- **Authorization / ownership** : les regles d'autorisation et d'ownership metier vivent toujours dans le use case ou le domaine, jamais dans le controller.
+- **Repositories metier** : utilises depuis les use cases uniquement, jamais depuis les controllers.
+- **Rappel avant modification** : avant de modifier du code applicatif, verifier qu'aucun controller ne porte deja de logique metier ni d'acces repository ; si c'est le cas, deplacer cette logique vers le use case ou le domaine.
 
 ## Règles métier spécifiques
 

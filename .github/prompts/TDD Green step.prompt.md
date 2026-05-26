@@ -104,12 +104,24 @@ Examples:
 - You **MUST** prefer the existing business concept and existing test class when present.
 - You **MUST** follow the testing instructions for the requested layer.
 - For application API slices, you **MUST** note whether Refactor will need route declarations, controller annotations or handler metadata, and minimum web framework wiring for the selected scenarios.
+- For application API slices, you **MUST** keep business authorization, ownership, workflow, business decisions, aggregate mutation, and repository usage out of the controller seam and in the use-case or domain seam.
+- For application API slices, you **MUST** keep the seam shaped as `controller -> application use case`; the controller seam must not inject or call business repositories or ports directly.
+- For application API slices, you **MUST NOT** make the controller seam load entities, inspect domain state for workflow branching, or trigger notifications directly.
+- For application API slices, you **MUST** pass actor identity and ownership-relevant inputs into the use-case command or call rather than enforcing ownership in the controller seam.
+- For application API slices, you **MUST** keep entity loading, ownership or authorization checks, workflow branching, and notification triggering inside the application use case or domain seam.
 - For infrastructure repository slices, you **MUST** note whether the required domain port or interface already exists or must be extracted as a pure-domain contract during Refactor.
 - For infrastructure persistence slices, you **MUST** note whether Refactor will need separate JPA persistence entities, a dedicated mapper, and JPA wiring for the selected scenarios.
+- You **MUST** include a handoff-ready structured summary for Refactor with the exact fields `test_file_path`, `test_method_name`, and `implemented_code`.
+- You **MUST** populate `implemented_code` only with class, enum, or interface symbols implemented in the target test class to make selected tests pass.
+- When `status` is `GREEN`, you **MUST** set `test_file_path` and `test_method_name` to concrete values tied to a selected passing scenario test.
+- When `status` is `PARTIAL` or `BLOCKED`, you **MUST** set `test_file_path` and `test_method_name` to `null`, and `implemented_code` to `[]`.
 
 ## Layer guard rails
 - `application`: keep an HTTP-controller-to-domain seam inside test code. For API or endpoint scenarios, exercise a real route or web test surface and preserve HTTP method, path, status, and body behavior. Do not embed domain business rules in the temporary controller.
+- `application`: before adding temporary implementation, verify the controller seam stays transport-only. Limit it to HTTP input reading, basic HTTP validation, DTO -> command mapping, use-case invocation, and HTTP response mapping. Do not load business entities or call business repositories from the controller seam.
+- `application`: keep HTTP mappers limited to transport-to-use-case translation. Do not compute business state transitions, updated lines, pricing totals, or token balances in a controller helper or mapper.
 - `domain`: keep a use-case-to-port seam inside the test code. Do not create concrete infrastructure implementations.
+- `domain`: keep business orchestration, repository usage through ports, authorization or ownership rules, workflow, and domain services inside the use case or domain seam. Do not introduce HTTP concepts, API DTOs, `ResponseEntity`, or status codes.
 - `infrastructure`: keep the implementation aligned with the existing domain port contract. Do not move business validation rules into the repository.
   - Shape the temporary seam like a future concrete JPA repository or adapter when the selected scenarios are about persistence, retrieval, update, or query behavior.
   - Keep domain and persistence concerns separate in the temporary test code when distinct JPA persistence entities or technical models will be needed later.
@@ -127,6 +139,9 @@ Examples:
 - Do not make an application API or endpoint scenario green by directly invoking a plain Java method that has no real route or handler semantics.
 - Do not hide a missing domain repository contract behind a temporary infrastructure seam without reporting whether Refactor must extract a minimal pure-domain port.
 - Do not let the temporary infrastructure seam imply JDBC or another persistence technology when the slice will be promoted as a real persistence implementation during Refactor; the target technology is JPA.
+- Do not return `GREEN` if at least one selected scenario test is not `PASSED`.
+- Do not set handoff fields to non-null values when `status` is `PARTIAL` or `BLOCKED`.
+- Do not include methods, variables, or production symbols in `implemented_code`; include only class, enum, or interface names implemented inside the test class.
 
 ## JSON output contract
 
@@ -160,9 +175,19 @@ Return a single valid JSON object with this shape:
       "<testMethodName>": "PASSED | FAILED | NOT_RUN"
     }
   },
-  "notes": ["string"]
+  "notes": ["string"],
+  "test_file_path": "string | null",
+  "test_method_name": "string | null",
+  "implemented_code": ["string"]
 }
 ```
+
+### Handoff semantics
+- `test_file_path`: path to the test file that should be used as the starting point for Refactor.
+- `test_method_name`: one selected scenario test method that is now green and can drive Refactor first.
+- `implemented_code`: list of class, enum, or interface symbols implemented in the test class to make selected tests pass.
+- If several selected methods passed, choose one primary method for `test_method_name` and keep the others in `selectedTestMethods`.
+- If `status` is `PARTIAL` or `BLOCKED`, return `test_file_path = null`, `test_method_name = null`, and `implemented_code = []`.
 
 ## Example output
 ```json
@@ -205,6 +230,11 @@ Return a single valid JSON object with this shape:
   "notes": [
     "Only the requested application scenarios were implemented.",
     "No production code was modified."
+  ],
+  "test_file_path": "application/src/test/java/com/example/application/order/PlaceDrinkOrderControllerTest.java",
+  "test_method_name": "shouldReturnUnauthorizedWhenSubmittingAvailableDrinkOrderWithoutFestivalGoerIdentifierScenario5",
+  "implemented_code": [
+    "RecordingPlaceDrinkOrderUseCase"
   ]
 }
 ```
